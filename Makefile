@@ -6,12 +6,13 @@ OBJECTS_DIR = objs
 
 SOURCES = ssl.c \
 			utils.c \
-            digest.c \
+			digest.c \
 			md5.c \
 			sha256.c \
 			blake2.c \
 			blake2s.c \
-			blake2b.c
+			blake2b.c \
+			base64.c
 
 OBJECTS = $(addprefix $(OBJECTS_DIR)/, $(SOURCES:.c=.o))
 

@@ -1,14 +1,16 @@
 #include "ssl.h"
 
 static const t_category g_categories[] = {
-    [CATEGORY_DIGEST] = { "Message Digest" }
+    [CATEGORY_DIGEST] = { "Message Digest" },
+    [CATEGORY_CIPHER] = { "Cipher" },
 };
 
 static const t_command g_commands[] = {
     { "md5", &g_categories[CATEGORY_DIGEST], process_md5 },
     { "sha256", &g_categories[CATEGORY_DIGEST], process_sha256 },
     { "blake2s", &g_categories[CATEGORY_DIGEST], process_blake2s },
-    { "blake2b", &g_categories[CATEGORY_DIGEST], process_blake2b }
+    { "blake2b", &g_categories[CATEGORY_DIGEST], process_blake2b },
+    { "base64", &g_categories[CATEGORY_CIPHER], process_base64 }
 };
 
 static const t_command *get_command(char *cmd)

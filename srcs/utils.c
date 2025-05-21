@@ -1,5 +1,16 @@
 #include "ssl.h"
 
+int get_fd(t_context *ctx, const char *file, bool is_output)
+{
+    int flags = is_output ? (O_WRONLY | O_CREAT | O_TRUNC) : O_RDONLY;
+
+    int fd = open(file, flags, is_output ? 0644 : 0);
+    if (fd == -1)
+        fatal_error(ctx, file, strerror(errno), NULL);
+
+    return (fd);
+}
+
 void free_input(void *content)
 {
     t_input *input = (t_input *)content;
@@ -11,11 +22,12 @@ void free_input(void *content)
     free(input);
 }
 
+// TODO: rewrite so that fatal_error only print, call free_ctx func, free ctx and exit
 void fatal_error(t_context *ctx, const char *s1, const char *s2, const char *s3)
 {
     print_error(s1, s2, s3);
-    if (ctx->digest.inputs)
-        ft_lstclear(&ctx->digest.inputs, free_input);
+    //if (ctx->digest.inputs)
+    //    ft_lstclear(&ctx->digest.inputs, free_input);
     free(ctx);
     exit(EXIT_FAILURE);
 }

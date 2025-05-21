@@ -110,7 +110,7 @@ t_context *parse_digest(const t_command *cmd, int argc, char **argv)
                 sum_mode = true;
             }
             else
-                fatal_error(ctx, cmd->name, argv[i], "Unknown flag");
+                fatal_error(ctx, cmd->name, argv[i], "Unknown option");
         }
         else
         {

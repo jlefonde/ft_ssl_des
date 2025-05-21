@@ -15,10 +15,12 @@
 # include "sha256.h"
 # include "blake2s.h"
 # include "blake2b.h"
+# include "base64.h"
 
 typedef enum e_category_type
 {
     CATEGORY_DIGEST,
+    CATEGORY_CIPHER
 }	t_category_type;
 
 typedef enum e_input_type
@@ -48,6 +50,13 @@ typedef union u_context
         void *(*cmd_func)(t_input *input);
         void (*print_func)(void *output);
     }	digest;
+
+    struct
+    {
+        char     *in;
+        char     *out;
+        bool    decode_mode;
+    }   base64;
 }	t_context;
 
 typedef struct s_category
@@ -62,6 +71,7 @@ typedef struct s_command
     void (*process_func)(const t_command *cmd, int argc, char **argv);
 }	t_command;
 
+int get_fd(t_context *ctx, const char *file, bool is_output);
 void free_input(void *content);
 void fatal_error(t_context *ctx, const char *s1, const char *s2, const char *s3);
 void print_error(const char *s1, const char *s2, const char *s3);
