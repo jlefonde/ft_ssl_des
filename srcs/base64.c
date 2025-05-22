@@ -84,39 +84,42 @@ void process_base64(const t_command *cmd, int argc, char **argv)
 {
     t_context *ctx = parse_base64(cmd, argc, argv);
 
-    printf("in: %d\n", ctx->base64.in);
-    printf("out: %d\n", ctx->base64.out);
-    printf("decode: %d\n", ctx->base64.decode_mode);
-
     uint8_t buffer[BUFFER_SIZE];
     ssize_t bytes_read = 0;
+    int nchar = 0;
     while ((bytes_read = read(ctx->base64.in, buffer, BUFFER_SIZE)) > 0)
     {
         for (int i = 0; i < bytes_read; i += 3)
         {
-            int8_t indices[4];
-            ft_memset(indices, -1, 4);
+            int nbytes = bytes_read - i > 3 ? 3 : bytes_read - i;
+            int pad = 3 - nbytes;
 
+            uint8_t indices[4];
             indices[0] = buffer[i] >> 2;
             indices[1] = ((buffer[i] & 0b00000011) << 4);
-            if ((i + 1) < bytes_read)
+            if (nbytes > 1)
             {
                 indices[1] |= (buffer[i + 1] >> 4);
                 indices[2] = ((buffer[i + 1] & 0b00001111) << 2);
-                if ((i + 2) < bytes_read)
+                if (nbytes > 2)
                 {
                     indices[2] |= ((buffer[i + 2] & 0b11000000) >> 6);
                     indices[3] = buffer[i + 2] & 0b00111111;
                 }
             }
-            for (int j = 0; j < 4; j++)
+
+            for (int j = 0; j < 4 - pad; j++)
             {
-                if (indices[j] >= 0)
-                    ft_fprintf(ctx->base64.out, "%c", g_alphabet[indices[j]]);
+                if (nchar == 64)
+                {
+                    ft_fprintf(ctx->base64.out, "\n");
+                    nchar = 0;
+                }
+                ft_fprintf(ctx->base64.out, "%c", g_alphabet[indices[j]]);
+                nchar++;
             }
-            if (indices[2] == -1)
-                ft_fprintf(ctx->base64.out, "=");
-            if (indices[1] == -1)
+
+            for (int j = 0; j < pad; j++)
                 ft_fprintf(ctx->base64.out, "=");
         }
     }
