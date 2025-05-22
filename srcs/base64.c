@@ -94,44 +94,33 @@ void process_base64(const t_command *cmd, int argc, char **argv)
     {
         for (int i = 0; i < bytes_read; i += 3)
         {
-            uint8_t w[4];
-            // printf("%d %x\n", i, buffer[i]);
-            // printf("%d %x\n", i + 1, buffer[i + 1]);
-            // printf("%d %x\n", i + 2, buffer[i + 2]);
+            int8_t indices[4];
+            ft_memset(indices, -1, 4);
 
-            w[0] = buffer[i] >> 2;
-            ft_printf("%c", g_alphabet[w[0]]);
-
+            indices[0] = buffer[i] >> 2;
+            indices[1] = ((buffer[i] & 0b00000011) << 4);
             if ((i + 1) < bytes_read)
             {
-                w[1] = ((buffer[i] & 0b11) << 4) | (buffer[i + 1] >> 4);
-                ft_printf("%c", g_alphabet[w[1]]);
+                indices[1] |= (buffer[i + 1] >> 4);
+                indices[2] = ((buffer[i + 1] & 0b00001111) << 2);
+                if ((i + 2) < bytes_read)
+                {
+                    indices[2] |= ((buffer[i + 2] & 0b11000000) >> 6);
+                    indices[3] = buffer[i + 2] & 0b00111111;
+                }
             }
-            else
+            for (int j = 0; j < 4; j++)
             {
-                w[1] = ((buffer[i] & 0b11) << 4);
-                ft_printf("%c==", g_alphabet[w[1]]);
-                break;
+                if (indices[j] >= 0)
+                    ft_fprintf(ctx->base64.out, "%c", g_alphabet[indices[j]]);
             }
-
-            if ((i + 2) < bytes_read)
-            {
-                w[2] = ((buffer[i + 1] & 0b00001111) << 2) | ((buffer[i + 2] & 0b11000000) >> 6);
-                ft_printf("%c", g_alphabet[w[2]]);
-            }
-            else
-            {
-                w[2] = ((buffer[i + 1] & 0b00001111) << 2);
-                ft_printf("%c=", g_alphabet[w[2]]);
-                break;
-            }
-            w[3] = buffer[i + 2] & 0b00111111;
-  
-            ft_printf("%c", g_alphabet[w[3]]);
+            if (indices[2] == -1)
+                ft_fprintf(ctx->base64.out, "=");
+            if (indices[1] == -1)
+                ft_fprintf(ctx->base64.out, "=");
         }
-        ft_memset(buffer, 0x00, bytes_read);
     }
-    ft_printf("\n");
+    ft_fprintf(ctx->base64.out, "\n");
 
     if (bytes_read == -1)
     {
