@@ -1,16 +1,5 @@
 #include "ssl.h"
 
-int get_fd(t_context *ctx, const char *file, bool is_output)
-{
-    int flags = is_output ? (O_WRONLY | O_CREAT | O_TRUNC) : O_RDONLY;
-
-    int fd = open(file, flags, is_output ? 0644 : 0);
-    if (fd == -1)
-        fatal_error(ctx, file, strerror(errno), NULL);
-
-    return (fd);
-}
-
 void free_input(void *content)
 {
     t_input *input = (t_input *)content;

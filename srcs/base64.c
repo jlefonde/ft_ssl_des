@@ -1,10 +1,23 @@
 #include "ssl.h"
 
-static int get_default_fd(t_context *ctx, const char *file, int default_fd, bool is_output)
+static const char g_alphabet[64] = {
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+    'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
+    'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+    'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'
+};
+
+static int get_fd(t_context *ctx, const char *file, int default_fd, bool is_output)
 {
     int fd = default_fd;
     if (file)
-        fd = get_fd(ctx, file, is_output);
+    {
+        int flags = is_output ? (O_WRONLY | O_CREAT | O_TRUNC) : O_RDONLY;
+    
+        fd = open(file, flags, is_output ? 0644 : 0);
+        if (fd == -1)
+            fatal_error(ctx, file, strerror(errno), NULL);
+    }
     return (fd);
 }
 
@@ -17,10 +30,12 @@ static t_context *parse_base64(const t_command *cmd, int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    ctx->base64.in = NULL;
-    ctx->base64.out = NULL;
+    ctx->base64.in = STDIN_FILENO;
+    ctx->base64.out = STDOUT_FILENO;
     ctx->base64.decode_mode = false;
 
+    char *in_file = NULL;
+    char *out_file = NULL;
     bool in_mode = false;
     bool out_mode = false;
     for (int i = 2; i < argc; ++i)
@@ -42,12 +57,12 @@ static t_context *parse_base64(const t_command *cmd, int argc, char **argv)
         }
         else if (in_mode)
         {
-            ctx->base64.in = argv[i];
+            in_file = argv[i];
             in_mode = false;
         }
         else if (out_mode)
         {
-            ctx->base64.out = argv[i];
+            out_file = argv[i];
             out_mode = false;
         }
         else
@@ -59,6 +74,9 @@ static t_context *parse_base64(const t_command *cmd, int argc, char **argv)
     else if (out_mode)
         fatal_error(ctx, cmd->name, NULL, "Option -o needs a value");
 
+    ctx->base64.in = get_fd(ctx, in_file, ctx->base64.in, false);
+    ctx->base64.out = get_fd(ctx, out_file, ctx->base64.out, true);
+
     return (ctx);
 }
 
@@ -66,29 +84,63 @@ void process_base64(const t_command *cmd, int argc, char **argv)
 {
     t_context *ctx = parse_base64(cmd, argc, argv);
 
-    printf("in: %s\n", ctx->base64.in);
-    printf("out: %s\n", ctx->base64.out);
+    printf("in: %d\n", ctx->base64.in);
+    printf("out: %d\n", ctx->base64.out);
     printf("decode: %d\n", ctx->base64.decode_mode);
 
-    int in_fd = get_default_fd(ctx, ctx->base64.in, STDIN_FILENO, false);
-    int out_fd = get_default_fd(ctx, ctx->base64.out, STDOUT_FILENO, false);
-
-    char buffer[BUFFER_SIZE];
+    uint8_t buffer[BUFFER_SIZE];
     ssize_t bytes_read = 0;
-    while ((bytes_read = read(in_fd, buffer, BUFFER_SIZE)) > 0)
+    while ((bytes_read = read(ctx->base64.in, buffer, BUFFER_SIZE)) > 0)
     {
-        buffer[bytes_read] = 0;
-        
+        for (int i = 0; i < bytes_read; i += 3)
+        {
+            uint8_t w[4];
+            // printf("%d %x\n", i, buffer[i]);
+            // printf("%d %x\n", i + 1, buffer[i + 1]);
+            // printf("%d %x\n", i + 2, buffer[i + 2]);
+
+            w[0] = buffer[i] >> 2;
+            ft_printf("%c", g_alphabet[w[0]]);
+
+            if ((i + 1) < bytes_read)
+            {
+                w[1] = ((buffer[i] & 0b11) << 4) | (buffer[i + 1] >> 4);
+                ft_printf("%c", g_alphabet[w[1]]);
+            }
+            else
+            {
+                w[1] = ((buffer[i] & 0b11) << 4);
+                ft_printf("%c==", g_alphabet[w[1]]);
+                break;
+            }
+
+            if ((i + 2) < bytes_read)
+            {
+                w[2] = ((buffer[i + 1] & 0b00001111) << 2) | ((buffer[i + 2] & 0b11000000) >> 6);
+                ft_printf("%c", g_alphabet[w[2]]);
+            }
+            else
+            {
+                w[2] = ((buffer[i + 1] & 0b00001111) << 2);
+                ft_printf("%c=", g_alphabet[w[2]]);
+                break;
+            }
+            w[3] = buffer[i + 2] & 0b00111111;
+  
+            ft_printf("%c", g_alphabet[w[3]]);
+        }
+        ft_memset(buffer, 0x00, bytes_read);
     }
+    ft_printf("\n");
 
     if (bytes_read == -1)
     {
-        close(in_fd);
-        close(out_fd);
+        close(ctx->base64.in);
+        close(ctx->base64.out);
         fatal_error(ctx, cmd->name, strerror(errno), NULL);
     }
 
-    close(in_fd);
-    close(out_fd);
+    close(ctx->base64.in);
+    close(ctx->base64.out);
     free(ctx);
 }

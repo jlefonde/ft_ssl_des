@@ -53,8 +53,8 @@ typedef union u_context
 
     struct
     {
-        char     *in;
-        char     *out;
+        int     in;
+        int     out;
         bool    decode_mode;
     }   base64;
 }	t_context;
@@ -71,7 +71,6 @@ typedef struct s_command
     void (*process_func)(const t_command *cmd, int argc, char **argv);
 }	t_command;
 
-int get_fd(t_context *ctx, const char *file, bool is_output);
 void free_input(void *content);
 void fatal_error(t_context *ctx, const char *s1, const char *s2, const char *s3);
 void print_error(const char *s1, const char *s2, const char *s3);

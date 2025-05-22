@@ -3,7 +3,7 @@
 
 # include "ssl.h"
 
-# define BUFFER_SIZE 64
+# define BUFFER_SIZE 3072
 
 typedef struct s_command t_command;
 
