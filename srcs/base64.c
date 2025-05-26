@@ -85,12 +85,19 @@ void process_base64(const t_command *cmd, int argc, char **argv)
     t_context *ctx = parse_base64(cmd, argc, argv);
 
     uint8_t buffer[BUFFER_SIZE];
+    char out_buffer[BUFFER_SIZE];
     ssize_t bytes_read = 0;
-    int nchar = 0;
+    size_t out_buffer_pos = 0;
     while ((bytes_read = read(ctx->base64.in, buffer, BUFFER_SIZE)) > 0)
     {
         for (int i = 0; i < bytes_read; i += 3)
         {
+            if (out_buffer_pos > BUFFER_SIZE - 6)
+            {
+                write(ctx->base64.out, out_buffer, out_buffer_pos);
+                ft_memset(out_buffer, 0x00, out_buffer_pos);
+                out_buffer_pos = 0;
+            }
             int nbytes = bytes_read - i > 3 ? 3 : bytes_read - i;
             int pad = 3 - nbytes;
 
@@ -107,23 +114,23 @@ void process_base64(const t_command *cmd, int argc, char **argv)
                     indices[3] = buffer[i + 2] & 0b00111111;
                 }
             }
-
-            for (int j = 0; j < 4 - pad; j++)
-            {
-                if (nchar == 64)
-                {
-                    ft_fprintf(ctx->base64.out, "\n");
-                    nchar = 0;
-                }
-                ft_fprintf(ctx->base64.out, "%c", g_alphabet[indices[j]]);
-                nchar++;
-            }
-
+            out_buffer[out_buffer_pos++] = g_alphabet[indices[0]];
+            out_buffer[out_buffer_pos++] = g_alphabet[indices[1]];
+            if (nbytes > 1)
+                out_buffer[out_buffer_pos++] = g_alphabet[indices[2]];
+            if (nbytes > 2)
+                out_buffer[out_buffer_pos++] = g_alphabet[indices[3]];
             for (int j = 0; j < pad; j++)
-                ft_fprintf(ctx->base64.out, "=");
+                out_buffer[out_buffer_pos++] = '=';
         }
     }
-    ft_fprintf(ctx->base64.out, "\n");
+
+    if (out_buffer_pos)
+    {
+        write(ctx->base64.out, out_buffer, out_buffer_pos);
+        ft_memset(out_buffer, 0x00, out_buffer_pos);
+        out_buffer_pos = 0;
+    }
 
     if (bytes_read == -1)
     {
