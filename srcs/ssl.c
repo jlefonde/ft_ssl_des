@@ -44,7 +44,7 @@ int main(int argc, char **argv)
 {
     if (argc < 2)
     {
-        ft_fprintf(STDERR_FILENO, "usage: ./ssl <command> [options] [file/string]\n\n");
+        ft_fprintf(STDERR_FILENO, "usage: ./ft_ssl <command> [options] [file/string]\n\n");
         helper(STDERR_FILENO);
         return (1);
     }

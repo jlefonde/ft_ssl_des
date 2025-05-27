@@ -16,7 +16,7 @@ SOURCES = ssl.c \
 
 OBJECTS = $(addprefix $(OBJECTS_DIR)/, $(SOURCES:.c=.o))
 
-CFLAGS = -Wall -Wextra -Werror -I$(HEADERS_DIR)
+CFLAGS = -I$(HEADERS_DIR)
 LDFLAGS = -L./libft -lft -lm
 
 all: ./libft/libft.a $(NAME)
