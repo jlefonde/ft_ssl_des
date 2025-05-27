@@ -169,8 +169,10 @@ static bool is_valid_base64_char(char c)
 
 static uint8_t get_byte(const t_command *cmd, t_context *ctx, t_buffer *buffer, int *i)
 {
-    while (buffer->in[*i] == '\n')
+    while (*i < buffer->bytes_read && buffer->in[*i] == '\n')
         (*i)++;
+    if (*i >= buffer->bytes_read)
+        return (0);
     if (buffer->in[*i] == '=')
     {
         (*i)++;
