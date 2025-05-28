@@ -137,7 +137,8 @@ static void encode_base64(const t_command *cmd, t_context *ctx)
 
     if (buffer.out_pos)
         write_output(ctx, &buffer);
-    write(ctx->base64.out, "\n", 1);
+    if ((buffer.total_bytes_written % 64) != 0)
+        write(ctx->base64.out, "\n", 1);
 
     if (buffer.bytes_read == -1)
     {
