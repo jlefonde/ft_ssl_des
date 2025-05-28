@@ -137,6 +137,7 @@ static void encode_base64(const t_command *cmd, t_context *ctx)
 
     if (buffer.out_pos)
         write_output(ctx, &buffer);
+
     if ((buffer.total_bytes_written % 64) != 0)
         write(ctx->base64.out, "\n", 1);
 
@@ -152,36 +153,29 @@ static uint8_t get_char_index(char c)
 {
     for (int i = 0; i < 64; i++)
     {
-        if (g_base64_alphabet[i] == c)
-            return i;
+        if (c == g_base64_alphabet[i])
+            return (i);
     }
-    return -1;
+    return (-1);
 }
 
 static bool is_valid_base64_char(char c)
 {
-    for (int j = 0; j < 64; j++)
+    for (int i = 0; i < 64; i++)
     {
-        if (c == g_base64_alphabet[j])
+        if (c == g_base64_alphabet[i])
             return (true);
     }
     return (false);
 }
 
-static uint8_t get_byte(const t_command *cmd, t_context *ctx, t_buffer *buffer, int *i)
+static uint8_t get_byte(const t_command *cmd, t_context *ctx, t_buffer *buffer, char c)
 {
-    while (*i < buffer->bytes_read && buffer->in[*i] == '\n')
-        (*i)++;
-    if (*i >= buffer->bytes_read)
+    if (c == '=')
         return (0);
-    if (buffer->in[*i] == '=')
-    {
-        (*i)++;
-        return (0);
-    }
-    if (is_valid_base64_char(buffer->in[*i]))
-        return (get_char_index(buffer->in[(*i)++]));
-    write(ctx->base64.out, buffer->out, buffer->out_pos);
+    if (is_valid_base64_char(c))
+        return (get_char_index(c));
+    write_output(ctx, buffer);
     fatal_error(ctx, cmd->name, "Invalid input", NULL);
 }
 
@@ -192,22 +186,52 @@ static void decode_base64(const t_command *cmd, t_context *ctx)
     buffer.bytes_read = 0;
     buffer.out_pos = 0;
 
+    uint8_t bytes[4];
+    size_t byte_count = 0;
+    size_t npad = 0;
+
     while ((buffer.bytes_read = read(ctx->base64.in, buffer.in, BUFFER_SIZE)) > 0)
     {
-        int i = 0;
-        while (i < buffer.bytes_read)
+        for (int i = 0; i < buffer.bytes_read; i++)
         {
-            uint8_t first_byte = get_byte(cmd, ctx, &buffer, &i);
-            uint8_t second_byte = get_byte(cmd, ctx, &buffer, &i);
-            buffer.out[buffer.out_pos++] = ((first_byte & 0b00111111) << 2) | (second_byte >> 4);
+            if (buffer.in[i] == '\n')
+                continue;
 
-            uint8_t third_byte = get_byte(cmd, ctx, &buffer, &i);
-            buffer.out[buffer.out_pos++] = ((second_byte & 0b00001111) << 4) | (third_byte >> 2);
+            if (npad > 0 && buffer.in[i] != '=')
+            {
+                write_output(ctx, &buffer);
+                fatal_error(ctx, cmd->name, "Invalid input", NULL);
+            }
 
-            uint8_t fourth_byte = get_byte(cmd, ctx, &buffer, &i);
-            buffer.out[buffer.out_pos++] = ((third_byte & 0b00000011) << 6) | (fourth_byte & 0b00111111);
+            if (buffer.in[i] == '=')
+            {
+                if (byte_count < 2)
+                {
+                    write_output(ctx, &buffer);
+                    fatal_error(ctx, cmd->name, "Invalid input", NULL); 
+                }
+                npad++;
+            }
+
+            bytes[byte_count++] = get_byte(cmd, ctx, &buffer, buffer.in[i]);
+
+            if (byte_count == 4)
+            {
+                if (buffer.out_pos > BUFFER_SIZE - 3)
+                    write_output(ctx, &buffer);
+
+                buffer.out[buffer.out_pos++] = ((bytes[0] & 0b00111111) << 2) | (bytes[1] >> 4);
+                
+                if (npad < 2)
+                    buffer.out[buffer.out_pos++] = ((bytes[1] & 0b00001111) << 4) | (bytes[2] >> 2);
+                
+                if (npad == 0)
+                    buffer.out[buffer.out_pos++] = ((bytes[2] & 0b00000011) << 6) | (bytes[3] & 0b00111111);
+                
+                byte_count = 0;
+                npad = 0;
+            }
         }
-        write_output(ctx, &buffer);
     }
 
     if (buffer.out_pos)
