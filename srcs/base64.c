@@ -183,7 +183,9 @@ static void decode_base64(const t_command *cmd, t_context *ctx)
                 continue;
 
             bytes[byte_count] = get_base64_char_index(buffer.in[i], &npad);
-            if (bytes[byte_count] >= 64 || (npad > 0 && buffer.in[i] != '='))
+            if (bytes[byte_count] >= 64
+                || (npad > 0 && buffer.in[i] != '=')
+                || (byte_count < 2 && buffer.in[i] == '='))
             {
                 write_output(ctx, &buffer);
                 fatal_error(ctx, cmd->name, "Invalid input", NULL); 
@@ -191,21 +193,14 @@ static void decode_base64(const t_command *cmd, t_context *ctx)
             byte_count++;
 
             if (byte_count == 2)
-            {
-                ft_printf("HERE1\n");
                 buffer.out[buffer.out_pos++] = ((bytes[0] & 0b00111111) << 2) | (bytes[1] >> 4);
-            }
             else if (byte_count == 3 && npad < 2)
-            {
-                ft_printf("HERE2\n");
                 buffer.out[buffer.out_pos++] = ((bytes[1] & 0b00001111) << 4) | (bytes[2] >> 2);
-            }
             else if (byte_count == 4)
             {
-                ft_printf("HERE3\n");
-                if (buffer.out_pos > BUFFER_SIZE - 3)
+                if (buffer.out_pos > BUFFER_SIZE - 4)
                     write_output(ctx, &buffer);
-                
+
                 if (npad == 0)
                     buffer.out[buffer.out_pos++] = ((bytes[2] & 0b00000011) << 6) | (bytes[3] & 0b00111111);
                 
@@ -217,7 +212,7 @@ static void decode_base64(const t_command *cmd, t_context *ctx)
 
     if (buffer.out_pos)
         write_output(ctx, &buffer);
-    if (byte_count != 0)
+    if (byte_count != 0 && (byte_count != 3 && npad != 0))
         fatal_error(ctx, cmd->name, "Invalid input", NULL); 
 
     if (buffer.bytes_read == -1)
