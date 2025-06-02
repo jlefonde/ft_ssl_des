@@ -2,7 +2,7 @@
 
 static const t_category g_categories[] = {
     [CATEGORY_DIGEST] = { "Message Digest" },
-    [CATEGORY_CIPHER] = { "Cipher" },
+    [CATEGORY_CIPHER] = { "Cipher" }
 };
 
 static const t_command g_commands[] = {

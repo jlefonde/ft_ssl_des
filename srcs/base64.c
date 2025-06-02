@@ -7,6 +7,15 @@ static const char g_base64_alphabet[64] = {
     'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'
 };
 
+void clear_base64_ctx(t_context *ctx)
+{
+    if (ctx->base64.in != STDIN_FILENO)
+        close(ctx->base64.in);
+    if (ctx->base64.out != STDOUT_FILENO)
+        close(ctx->base64.out);
+    free(ctx);
+}
+
 static int get_fd(t_context *ctx, const char *file, int default_fd, bool is_output)
 {
     int fd = default_fd;
@@ -16,7 +25,7 @@ static int get_fd(t_context *ctx, const char *file, int default_fd, bool is_outp
 
         fd = open(file, flags, is_output ? 0644 : 0);
         if (fd == -1)
-            fatal_error(ctx, file, strerror(errno), NULL);
+            fatal_error(ctx, file, strerror(errno), NULL, clear_base64_ctx);
     }
     return (fd);
 }
@@ -53,7 +62,7 @@ static t_context *parse_base64(const t_command *cmd, int argc, char **argv)
             else if (ft_strcmp(argv[i], "-o") == 0)
                 out_mode = true;
             else
-                fatal_error(ctx, cmd->name, argv[i], "Unknown option");
+                fatal_error(ctx, cmd->name, argv[i], "Unknown option", clear_base64_ctx);
         }
         else if (in_mode)
         {
@@ -66,13 +75,13 @@ static t_context *parse_base64(const t_command *cmd, int argc, char **argv)
             out_mode = false;
         }
         else
-            fatal_error(ctx, cmd->name, "Extra option", argv[i]);
+            fatal_error(ctx, cmd->name, "Extra option", argv[i], clear_base64_ctx);
     }
 
     if (in_mode)
-        fatal_error(ctx, cmd->name, NULL, "Option -i needs a value");
+        fatal_error(ctx, cmd->name, NULL, "Option -i needs a value", clear_base64_ctx);
     else if (out_mode)
-        fatal_error(ctx, cmd->name, NULL, "Option -o needs a value");
+        fatal_error(ctx, cmd->name, NULL, "Option -o needs a value", clear_base64_ctx);
 
     ctx->base64.in = get_fd(ctx, in_file, ctx->base64.in, false);
     ctx->base64.out = get_fd(ctx, out_file, ctx->base64.out, true);
@@ -142,11 +151,7 @@ static void encode_base64(const t_command *cmd, t_context *ctx)
         write(ctx->base64.out, "\n", 1);
 
     if (buffer.bytes_read == -1)
-    {
-        close(ctx->base64.in);
-        close(ctx->base64.out);
-        fatal_error(ctx, cmd->name, strerror(errno), NULL);
-    }
+        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_base64_ctx);
 }
 
 static uint8_t get_base64_char_index(char c, size_t *npad)
@@ -188,19 +193,19 @@ static void decode_base64(const t_command *cmd, t_context *ctx)
                 || (byte_count < 2 && buffer.in[i] == '='))
             {
                 write_output(ctx, &buffer);
-                fatal_error(ctx, cmd->name, "Invalid input", NULL); 
+                fatal_error(ctx, cmd->name, "Invalid input", NULL, clear_base64_ctx); 
             }
             byte_count++;
 
             if (byte_count == 2)
                 buffer.out[buffer.out_pos++] = ((bytes[0] & 0b00111111) << 2) | (bytes[1] >> 4);
-            else if (byte_count == 3 && npad < 2)
+            else if (byte_count == 3 && npad == 0)
                 buffer.out[buffer.out_pos++] = ((bytes[1] & 0b00001111) << 4) | (bytes[2] >> 2);
             else if (byte_count == 4)
             {
-                if (buffer.out_pos > BUFFER_SIZE - 4)
+                if (buffer.out_pos > BUFFER_SIZE - 3)
                     write_output(ctx, &buffer);
-
+                
                 if (npad == 0)
                     buffer.out[buffer.out_pos++] = ((bytes[2] & 0b00000011) << 6) | (bytes[3] & 0b00111111);
                 
@@ -213,14 +218,10 @@ static void decode_base64(const t_command *cmd, t_context *ctx)
     if (buffer.out_pos)
         write_output(ctx, &buffer);
     if (byte_count != 0 && (byte_count != 3 && npad != 0))
-        fatal_error(ctx, cmd->name, "Invalid input", NULL); 
+        fatal_error(ctx, cmd->name, "Invalid input", NULL, clear_base64_ctx); 
 
     if (buffer.bytes_read == -1)
-    {
-        close(ctx->base64.in);
-        close(ctx->base64.out);
-        fatal_error(ctx, cmd->name, strerror(errno), NULL);
-    }
+        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_base64_ctx);
 }
 
 void process_base64(const t_command *cmd, int argc, char **argv)
@@ -231,7 +232,5 @@ void process_base64(const t_command *cmd, int argc, char **argv)
         decode_base64(cmd, ctx);
     else
         encode_base64(cmd, ctx);
-    close(ctx->base64.in);
-    close(ctx->base64.out);
-    free(ctx);
+    clear_base64_ctx(ctx);
 }

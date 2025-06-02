@@ -4,20 +4,16 @@ void free_input(void *content)
 {
     t_input *input = (t_input *)content;
 
-    if (input->str)
-        free(input->str);
+    free(input->str);
     if (input->type == INPUT_FILE && input->fd != -1)
         close(input->fd);
     free(input);
 }
 
-// TODO: rewrite so that fatal_error only print, call free_ctx func, free ctx and exit
-void fatal_error(t_context *ctx, const char *s1, const char *s2, const char *s3)
+void fatal_error(t_context *ctx, const char *s1, const char *s2, const char *s3, void (*clear_ctx)(t_context *ctx))
 {
     print_error(s1, s2, s3);
-    //if (ctx->digest.inputs)
-    //    ft_lstclear(&ctx->digest.inputs, free_input);
-    free(ctx);
+    clear_ctx(ctx);
     exit(EXIT_FAILURE);
 }
 

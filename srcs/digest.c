@@ -1,5 +1,12 @@
 #include "ssl.h"
 
+void clear_digest_ctx(t_context *ctx)
+{
+    if (ctx->digest.inputs)
+        ft_lstclear(&ctx->digest.inputs, free_input);
+    free(ctx);
+}
+
 static void print_cmd(const t_command *cmd)
 {
     char *cmd_name = ft_strmap(cmd->name, ft_toupper);
@@ -50,7 +57,7 @@ static void handle_stdin_input(const t_command *cmd, int argc, t_context *ctx, b
     {
         t_input *input = (t_input *)malloc(sizeof(t_input));
         if (!input)
-            fatal_error(ctx, cmd->name, strerror(errno), NULL);
+            fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_digest_ctx);
 
         input->type = INPUT_STDIN;
         input->fd = STDIN_FILENO;
@@ -110,13 +117,13 @@ t_context *parse_digest(const t_command *cmd, int argc, char **argv)
                 sum_mode = true;
             }
             else
-                fatal_error(ctx, cmd->name, argv[i], "Unknown option");
+                fatal_error(ctx, cmd->name, argv[i], "Unknown option", clear_digest_ctx);
         }
         else
         {
             t_input *input = (t_input *)malloc(sizeof(t_input));
             if (!input)
-                fatal_error(ctx, cmd->name, strerror(errno), NULL);
+                fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_digest_ctx);
 
             input->type = sum_mode ? INPUT_STR : INPUT_FILE;
             input->str = ft_strdup(argv[i]);
@@ -133,7 +140,7 @@ t_context *parse_digest(const t_command *cmd, int argc, char **argv)
     }
 
     if (sum_mode)
-        fatal_error(ctx, cmd->name, NULL, "Option -s needs a value");
+        fatal_error(ctx, cmd->name, NULL, "Option -s needs a value", clear_digest_ctx);
 
     handle_stdin_input(cmd, argc, ctx, file_found);
 

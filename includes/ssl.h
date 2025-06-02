@@ -72,11 +72,14 @@ typedef struct s_command
 }	t_command;
 
 void free_input(void *content);
-void fatal_error(t_context *ctx, const char *s1, const char *s2, const char *s3);
+void fatal_error(t_context *ctx, const char *s1, const char *s2, const char *s3, void (*free_ctx)(t_context *ctx));
 void print_error(const char *s1, const char *s2, const char *s3);
 ssize_t read_from_input(t_input *input, void* buffer, size_t nbytes);
 
 t_context *parse_digest(const t_command *cmd, int argc, char **argv);
 void process_digest(const t_command *cmd, t_context *ctx);
+
+void clear_digest_ctx(t_context *ctx);
+void clear_base64_ctx(t_context *ctx);
 
 #endif

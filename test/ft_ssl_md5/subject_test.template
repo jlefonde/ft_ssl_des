@@ -1,70 +1,142 @@
 @test "echo \"42 is nice\" | ../ft_ssl $CMD" {
-    run ../ft_ssl $CMD <<< "42 is nice"
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl $CMD <<< "42 is nice"
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    assert_success
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    assert_success
     assert_output "(stdin)= $(openssl $OPENSSL_CMD <<< "42 is nice" | awk '{print $2}')"
+    rm -f "$valgrind_log"
 }
 
 @test "echo \"42 is nice\" | ../ft_ssl $CMD -p" {
-    run ../ft_ssl $CMD -p <<< "42 is nice"
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl $CMD -p <<< "42 is nice"
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    assert_success
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    assert_success
     assert_output "(\"42 is nice\")= $(openssl $OPENSSL_CMD <<< "42 is nice" | awk '{print $2}')"
+    rm -f "$valgrind_log"
 }
 
 @test "echo \"Pity the living.\" | ../ft_ssl $CMD -q -r" {
-    run ../ft_ssl $CMD -q -r <<< "Pity the living."
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl $CMD -q -r <<< "Pity the living."
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    assert_success
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    assert_success
     assert_output "$(openssl $OPENSSL_CMD <<< "Pity the living." | awk '{print $2}')"
+    rm -f "$valgrind_log"
 }
 
 @test "../ft_ssl $CMD file" {
-    run ../ft_ssl $CMD file
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl $CMD file
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    assert_success
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    assert_success
     assert_output "$CMD_UPPERCASE (file) = $(openssl $OPENSSL_CMD file | awk '{print $2}')"
+    rm -f "$valgrind_log"
 }
 
 @test "../ft_ssl $CMD -r file" {
-    run ../ft_ssl $CMD -r file
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl $CMD -r file
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    assert_success
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    assert_success
     assert_output "$(openssl $OPENSSL_CMD file | awk '{print $2}') file"
+    rm -f "$valgrind_log"
 }
 
 @test "../ft_ssl $CMD -s \"pity those that aren't following baerista on spotify.\"" {
-    run ../ft_ssl $CMD -s "pity those that aren't following baerista on spotify."
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl $CMD -s "pity those that aren't following baerista on spotify."
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    assert_success
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    assert_success
     assert_output "$CMD_UPPERCASE (\"pity those that aren't following baerista on spotify.\") = $(echo -n "pity those that aren't following baerista on spotify." | openssl $OPENSSL_CMD | awk '{print $2}')"
+    rm -f "$valgrind_log"
 }
 
 @test "echo \"be sure to handle edge cases carefully\" | ../ft_ssl $CMD -p file" {
-    run ../ft_ssl $CMD -p file <<< "be sure to handle edge cases carefully"
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl $CMD -p file <<< "be sure to handle edge cases carefully"
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    assert_success
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    assert_success
     assert_output "(\"be sure to handle edge cases carefully\")= $(openssl $OPENSSL_CMD <<< "be sure to handle edge cases carefully" | awk '{print $2}')
 $CMD_UPPERCASE (file) = $(openssl $OPENSSL_CMD file | awk '{print $2}')"
+    rm -f "$valgrind_log"
 }
 
 @test "echo \"some of this will not make sense at first\" | ../ft_ssl $CMD file" {
-    run ../ft_ssl $CMD file <<< "some of this will not make sense at first"
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl $CMD file <<< "some of this will not make sense at first"
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    assert_success
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    assert_success
     assert_output "$CMD_UPPERCASE (file) = $(openssl $OPENSSL_CMD file | awk '{print $2}')"
+    rm -f "$valgrind_log"
 }
 
 @test "echo \"but eventually you will understand\" | ../ft_ssl $CMD -p -r file" {
-    run ../ft_ssl $CMD -p -r file <<< "but eventually you will understand"
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl $CMD -p -r file <<< "but eventually you will understand"
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    assert_success
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    assert_success
     assert_output "(\"but eventually you will understand\")= $(openssl $OPENSSL_CMD <<< "but eventually you will understand" | awk '{print $2}')
 $(openssl $OPENSSL_CMD file | awk '{print $2}') file"
+    rm -f "$valgrind_log"
 }
 
 @test "echo \"GL HF let's go\" | ../ft_ssl $CMD -p -s \"foo\" file" {
-    run ../ft_ssl $CMD -p -s "foo" file <<< "GL HF let's go"
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl $CMD -p -s "foo" file <<< "GL HF let's go"
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    assert_success
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    assert_success
     assert_output "(\"GL HF let's go\")= $(openssl $OPENSSL_CMD <<< "GL HF let's go" | awk '{print $2}')
 $CMD_UPPERCASE (\"foo\") = $(echo -n "foo" | openssl $OPENSSL_CMD | awk '{print $2}')
 $CMD_UPPERCASE (file) = $(openssl $OPENSSL_CMD file | awk '{print $2}')"
+    rm -f "$valgrind_log"
 }
 
 @test "echo \"one more thing\" | ../ft_ssl $CMD -r -p -s \"foo\" file -s \"bar\"" {
-    run ../ft_ssl $CMD -r -p -s "foo" file -s "bar" <<< "one more thing"
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl $CMD -r -p -s "foo" file -s "bar" <<< "one more thing"
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    assert_success
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    assert_success
     assert_output "(\"one more thing\")= $(openssl $OPENSSL_CMD <<< "one more thing" | awk '{print $2}')
 $(echo -n "foo" | openssl $OPENSSL_CMD | awk '{print $2}') \"foo\"
 $(openssl $OPENSSL_CMD file | awk '{print $2}') file
 ft_ssl: $CMD: -s: No such file or directory
 ft_ssl: $CMD: bar: No such file or directory"
+    rm -f "$valgrind_log"
 }
 
 @test "echo \"just to be extra clear\" | ../ft_ssl $CMD -r -q -p -s \"foo\" file" {
-    run ../ft_ssl $CMD -r -q -p -s "foo" file <<< "just to be extra clear"
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl $CMD -r -q -p -s "foo" file <<< "just to be extra clear"
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    assert_success
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    assert_success
     assert_output "just to be extra clear
 $(openssl $OPENSSL_CMD <<< "just to be extra clear" | awk '{print $2}')
 $(echo -n "foo" | openssl $OPENSSL_CMD | awk '{print $2}')
 $(openssl $OPENSSL_CMD file | awk '{print $2}')"
+    rm -f "$valgrind_log"
 }
