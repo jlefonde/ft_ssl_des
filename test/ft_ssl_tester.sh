@@ -9,6 +9,7 @@ BBLUE='\033[1;34m'
 RESET='\033[0m'
 
 ./ft_ssl_md5/ft_ssl_md5.sh
+./ft_ssl_des/ft_ssl_des.sh
 
 if [ ! -d "bats" ]; then
     git clone https://github.com/bats-core/bats-core.git bats

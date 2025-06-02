@@ -1,0 +1,10 @@
+@test "base64 $FILE" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl base64 -i $FILE
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    assert_success
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    assert_success
+    assert_output $(base64 -w 64 $FILE)
+    rm -f "$valgrind_log"
+}

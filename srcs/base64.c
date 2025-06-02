@@ -203,12 +203,12 @@ static void decode_base64(const t_command *cmd, t_context *ctx)
                 buffer.out[buffer.out_pos++] = ((bytes[1] & 0b00001111) << 4) | (bytes[2] >> 2);
             else if (byte_count == 4)
             {
-                if (buffer.out_pos > BUFFER_SIZE - 3)
-                    write_output(ctx, &buffer);
-                
                 if (npad == 0)
                     buffer.out[buffer.out_pos++] = ((bytes[2] & 0b00000011) << 6) | (bytes[3] & 0b00111111);
-                
+
+                if (buffer.out_pos > BUFFER_SIZE - 3)
+                    write_output(ctx, &buffer);
+
                 byte_count = 0;
                 npad = 0;
             }
