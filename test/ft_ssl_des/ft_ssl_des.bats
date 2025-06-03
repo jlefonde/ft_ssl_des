@@ -22,7 +22,7 @@ setup_file() {
 
 teardown_file() {
     for file in "${files[@]}"; do
-        rm -f "$file"
+        rm -f "$file" "${file}_enc"
     done
 }
 
