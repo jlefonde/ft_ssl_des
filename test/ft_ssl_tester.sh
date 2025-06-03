@@ -23,6 +23,10 @@ if [ ! -d "test_helper/bats-assert" ]; then
     git clone https://github.com/bats-core/bats-assert.git test_helper/bats-assert
 fi
 
+if [ ! -d "test_helper/bats-file" ]; then
+    git clone https://github.com/bats-core/bats-file.git test_helper/bats-file
+fi
+
 echo -e "${BGREEN}_________________________________________________________________${RESET}"
 echo -e "${BGREEN}   ___   __                                 ___                ${RESET}"
 echo -e "${BGREEN} / ___\ /\ \__                             /\_ \               ${RESET}"
