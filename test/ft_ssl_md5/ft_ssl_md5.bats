@@ -35,9 +35,9 @@ declare -g files=( "0B" "1B" "56B" "57B" "63B" "64B" "65B" "100B" "128B" "10MB" 
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 <<< "42 is nice"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "(stdin)= $(openssl md5 <<< "42 is nice" | awk '{print $2}')"
     rm -f "$valgrind_log"
 }
@@ -46,9 +46,9 @@ declare -g files=( "0B" "1B" "56B" "57B" "63B" "64B" "65B" "100B" "128B" "10MB" 
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -p <<< "42 is nice"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "(\"42 is nice\")= $(openssl md5 <<< "42 is nice" | awk '{print $2}')"
     rm -f "$valgrind_log"
 }
@@ -57,9 +57,9 @@ declare -g files=( "0B" "1B" "56B" "57B" "63B" "64B" "65B" "100B" "128B" "10MB" 
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -q -r <<< "Pity the living."
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "$(openssl md5 <<< "Pity the living." | awk '{print $2}')"
     rm -f "$valgrind_log"
 }
@@ -68,9 +68,9 @@ declare -g files=( "0B" "1B" "56B" "57B" "63B" "64B" "65B" "100B" "128B" "10MB" 
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 file
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "MD5 (file) = $(openssl md5 file | awk '{print $2}')"
     rm -f "$valgrind_log"
 }
@@ -79,9 +79,9 @@ declare -g files=( "0B" "1B" "56B" "57B" "63B" "64B" "65B" "100B" "128B" "10MB" 
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -r file
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "$(openssl md5 file | awk '{print $2}') file"
     rm -f "$valgrind_log"
 }
@@ -90,9 +90,9 @@ declare -g files=( "0B" "1B" "56B" "57B" "63B" "64B" "65B" "100B" "128B" "10MB" 
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -s "pity those that aren't following baerista on spotify."
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "MD5 (\"pity those that aren't following baerista on spotify.\") = $(echo -n "pity those that aren't following baerista on spotify." | openssl md5 | awk '{print $2}')"
     rm -f "$valgrind_log"
 }
@@ -101,9 +101,9 @@ declare -g files=( "0B" "1B" "56B" "57B" "63B" "64B" "65B" "100B" "128B" "10MB" 
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -p file <<< "be sure to handle edge cases carefully"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "(\"be sure to handle edge cases carefully\")= $(openssl md5 <<< "be sure to handle edge cases carefully" | awk '{print $2}')
 MD5 (file) = $(openssl md5 file | awk '{print $2}')"
     rm -f "$valgrind_log"
@@ -113,9 +113,9 @@ MD5 (file) = $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 file <<< "some of this will not make sense at first"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "MD5 (file) = $(openssl md5 file | awk '{print $2}')"
     rm -f "$valgrind_log"
 }
@@ -124,9 +124,9 @@ MD5 (file) = $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -p -r file <<< "but eventually you will understand"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "(\"but eventually you will understand\")= $(openssl md5 <<< "but eventually you will understand" | awk '{print $2}')
 $(openssl md5 file | awk '{print $2}') file"
     rm -f "$valgrind_log"
@@ -136,9 +136,9 @@ $(openssl md5 file | awk '{print $2}') file"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -p -s "foo" file <<< "GL HF let's go"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "(\"GL HF let's go\")= $(openssl md5 <<< "GL HF let's go" | awk '{print $2}')
 MD5 (\"foo\") = $(echo -n "foo" | openssl md5 | awk '{print $2}')
 MD5 (file) = $(openssl md5 file | awk '{print $2}')"
@@ -149,9 +149,9 @@ MD5 (file) = $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -r -p -s "foo" file -s "bar" <<< "one more thing"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "(\"one more thing\")= $(openssl md5 <<< "one more thing" | awk '{print $2}')
 $(echo -n "foo" | openssl md5 | awk '{print $2}') \"foo\"
 $(openssl md5 file | awk '{print $2}') file
@@ -164,9 +164,9 @@ ft_ssl: md5: bar: No such file or directory"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -r -q -p -s "foo" file <<< "just to be extra clear"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "just to be extra clear
 $(openssl md5 <<< "just to be extra clear" | awk '{print $2}')
 $(echo -n "foo" | openssl md5 | awk '{print $2}')
@@ -180,9 +180,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -q 0B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl md5 0B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -191,9 +191,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -q 1B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl md5 1B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -202,9 +202,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -q 56B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl md5 56B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -213,9 +213,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -q 57B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl md5 57B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -224,9 +224,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -q 63B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl md5 63B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -235,9 +235,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -q 64B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl md5 64B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -246,9 +246,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -q 65B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl md5 65B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -257,9 +257,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -q 100B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl md5 100B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -268,9 +268,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -q 128B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl md5 128B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -279,9 +279,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -q 10MB
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl md5 10MB | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -292,9 +292,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -q < 0B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl md5 < 0B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -303,9 +303,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -q < 1B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl md5 < 1B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -314,9 +314,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -q < 56B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl md5 < 56B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -325,9 +325,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -q < 57B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl md5 < 57B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -336,9 +336,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -q < 63B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl md5 < 63B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -347,9 +347,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -q < 64B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl md5 < 64B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -358,9 +358,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -q < 65B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl md5 < 65B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -369,9 +369,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -q < 100B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl md5 < 100B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -380,9 +380,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -q < 128B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl md5 < 128B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -391,9 +391,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl md5 -q < 10MB
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl md5 < 10MB | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -404,9 +404,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s <<< "42 is nice"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "(stdin)= $(openssl blake2s256 <<< "42 is nice" | awk '{print $2}')"
     rm -f "$valgrind_log"
 }
@@ -415,9 +415,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -p <<< "42 is nice"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "(\"42 is nice\")= $(openssl blake2s256 <<< "42 is nice" | awk '{print $2}')"
     rm -f "$valgrind_log"
 }
@@ -426,9 +426,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -q -r <<< "Pity the living."
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "$(openssl blake2s256 <<< "Pity the living." | awk '{print $2}')"
     rm -f "$valgrind_log"
 }
@@ -437,9 +437,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s file
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "BLAKE2S (file) = $(openssl blake2s256 file | awk '{print $2}')"
     rm -f "$valgrind_log"
 }
@@ -448,9 +448,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -r file
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "$(openssl blake2s256 file | awk '{print $2}') file"
     rm -f "$valgrind_log"
 }
@@ -459,9 +459,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -s "pity those that aren't following baerista on spotify."
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "BLAKE2S (\"pity those that aren't following baerista on spotify.\") = $(echo -n "pity those that aren't following baerista on spotify." | openssl blake2s256 | awk '{print $2}')"
     rm -f "$valgrind_log"
 }
@@ -470,9 +470,9 @@ $(openssl md5 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -p file <<< "be sure to handle edge cases carefully"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "(\"be sure to handle edge cases carefully\")= $(openssl blake2s256 <<< "be sure to handle edge cases carefully" | awk '{print $2}')
 BLAKE2S (file) = $(openssl blake2s256 file | awk '{print $2}')"
     rm -f "$valgrind_log"
@@ -482,9 +482,9 @@ BLAKE2S (file) = $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s file <<< "some of this will not make sense at first"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "BLAKE2S (file) = $(openssl blake2s256 file | awk '{print $2}')"
     rm -f "$valgrind_log"
 }
@@ -493,9 +493,9 @@ BLAKE2S (file) = $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -p -r file <<< "but eventually you will understand"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "(\"but eventually you will understand\")= $(openssl blake2s256 <<< "but eventually you will understand" | awk '{print $2}')
 $(openssl blake2s256 file | awk '{print $2}') file"
     rm -f "$valgrind_log"
@@ -505,9 +505,9 @@ $(openssl blake2s256 file | awk '{print $2}') file"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -p -s "foo" file <<< "GL HF let's go"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "(\"GL HF let's go\")= $(openssl blake2s256 <<< "GL HF let's go" | awk '{print $2}')
 BLAKE2S (\"foo\") = $(echo -n "foo" | openssl blake2s256 | awk '{print $2}')
 BLAKE2S (file) = $(openssl blake2s256 file | awk '{print $2}')"
@@ -518,9 +518,9 @@ BLAKE2S (file) = $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -r -p -s "foo" file -s "bar" <<< "one more thing"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "(\"one more thing\")= $(openssl blake2s256 <<< "one more thing" | awk '{print $2}')
 $(echo -n "foo" | openssl blake2s256 | awk '{print $2}') \"foo\"
 $(openssl blake2s256 file | awk '{print $2}') file
@@ -533,9 +533,9 @@ ft_ssl: blake2s: bar: No such file or directory"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -r -q -p -s "foo" file <<< "just to be extra clear"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "just to be extra clear
 $(openssl blake2s256 <<< "just to be extra clear" | awk '{print $2}')
 $(echo -n "foo" | openssl blake2s256 | awk '{print $2}')
@@ -549,9 +549,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -q 0B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2s256 0B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -560,9 +560,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -q 1B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2s256 1B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -571,9 +571,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -q 56B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2s256 56B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -582,9 +582,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -q 57B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2s256 57B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -593,9 +593,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -q 63B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2s256 63B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -604,9 +604,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -q 64B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2s256 64B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -615,9 +615,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -q 65B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2s256 65B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -626,9 +626,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -q 100B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2s256 100B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -637,9 +637,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -q 128B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2s256 128B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -648,9 +648,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -q 10MB
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2s256 10MB | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -661,9 +661,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -q < 0B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2s256 < 0B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -672,9 +672,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -q < 1B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2s256 < 1B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -683,9 +683,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -q < 56B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2s256 < 56B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -694,9 +694,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -q < 57B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2s256 < 57B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -705,9 +705,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -q < 63B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2s256 < 63B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -716,9 +716,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -q < 64B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2s256 < 64B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -727,9 +727,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -q < 65B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2s256 < 65B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -738,9 +738,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -q < 100B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2s256 < 100B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -749,9 +749,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -q < 128B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2s256 < 128B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -760,9 +760,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2s -q < 10MB
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2s256 < 10MB | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -773,9 +773,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 <<< "42 is nice"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "(stdin)= $(openssl sha256 <<< "42 is nice" | awk '{print $2}')"
     rm -f "$valgrind_log"
 }
@@ -784,9 +784,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -p <<< "42 is nice"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "(\"42 is nice\")= $(openssl sha256 <<< "42 is nice" | awk '{print $2}')"
     rm -f "$valgrind_log"
 }
@@ -795,9 +795,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -q -r <<< "Pity the living."
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "$(openssl sha256 <<< "Pity the living." | awk '{print $2}')"
     rm -f "$valgrind_log"
 }
@@ -806,9 +806,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 file
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "SHA256 (file) = $(openssl sha256 file | awk '{print $2}')"
     rm -f "$valgrind_log"
 }
@@ -817,9 +817,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -r file
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "$(openssl sha256 file | awk '{print $2}') file"
     rm -f "$valgrind_log"
 }
@@ -828,9 +828,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -s "pity those that aren't following baerista on spotify."
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "SHA256 (\"pity those that aren't following baerista on spotify.\") = $(echo -n "pity those that aren't following baerista on spotify." | openssl sha256 | awk '{print $2}')"
     rm -f "$valgrind_log"
 }
@@ -839,9 +839,9 @@ $(openssl blake2s256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -p file <<< "be sure to handle edge cases carefully"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "(\"be sure to handle edge cases carefully\")= $(openssl sha256 <<< "be sure to handle edge cases carefully" | awk '{print $2}')
 SHA256 (file) = $(openssl sha256 file | awk '{print $2}')"
     rm -f "$valgrind_log"
@@ -851,9 +851,9 @@ SHA256 (file) = $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 file <<< "some of this will not make sense at first"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "SHA256 (file) = $(openssl sha256 file | awk '{print $2}')"
     rm -f "$valgrind_log"
 }
@@ -862,9 +862,9 @@ SHA256 (file) = $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -p -r file <<< "but eventually you will understand"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "(\"but eventually you will understand\")= $(openssl sha256 <<< "but eventually you will understand" | awk '{print $2}')
 $(openssl sha256 file | awk '{print $2}') file"
     rm -f "$valgrind_log"
@@ -874,9 +874,9 @@ $(openssl sha256 file | awk '{print $2}') file"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -p -s "foo" file <<< "GL HF let's go"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "(\"GL HF let's go\")= $(openssl sha256 <<< "GL HF let's go" | awk '{print $2}')
 SHA256 (\"foo\") = $(echo -n "foo" | openssl sha256 | awk '{print $2}')
 SHA256 (file) = $(openssl sha256 file | awk '{print $2}')"
@@ -887,9 +887,9 @@ SHA256 (file) = $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -r -p -s "foo" file -s "bar" <<< "one more thing"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "(\"one more thing\")= $(openssl sha256 <<< "one more thing" | awk '{print $2}')
 $(echo -n "foo" | openssl sha256 | awk '{print $2}') \"foo\"
 $(openssl sha256 file | awk '{print $2}') file
@@ -902,9 +902,9 @@ ft_ssl: sha256: bar: No such file or directory"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -r -q -p -s "foo" file <<< "just to be extra clear"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "just to be extra clear
 $(openssl sha256 <<< "just to be extra clear" | awk '{print $2}')
 $(echo -n "foo" | openssl sha256 | awk '{print $2}')
@@ -918,9 +918,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -q 0B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl sha256 0B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -929,9 +929,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -q 1B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl sha256 1B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -940,9 +940,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -q 56B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl sha256 56B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -951,9 +951,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -q 57B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl sha256 57B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -962,9 +962,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -q 63B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl sha256 63B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -973,9 +973,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -q 64B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl sha256 64B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -984,9 +984,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -q 65B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl sha256 65B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -995,9 +995,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -q 100B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl sha256 100B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1006,9 +1006,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -q 128B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl sha256 128B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1017,9 +1017,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -q 10MB
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl sha256 10MB | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1030,9 +1030,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -q < 0B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl sha256 < 0B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1041,9 +1041,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -q < 1B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl sha256 < 1B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1052,9 +1052,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -q < 56B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl sha256 < 56B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1063,9 +1063,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -q < 57B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl sha256 < 57B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1074,9 +1074,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -q < 63B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl sha256 < 63B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1085,9 +1085,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -q < 64B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl sha256 < 64B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1096,9 +1096,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -q < 65B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl sha256 < 65B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1107,9 +1107,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -q < 100B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl sha256 < 100B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1118,9 +1118,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -q < 128B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl sha256 < 128B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1129,9 +1129,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl sha256 -q < 10MB
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl sha256 < 10MB | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1142,9 +1142,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b <<< "42 is nice"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "(stdin)= $(openssl blake2b512 <<< "42 is nice" | awk '{print $2}')"
     rm -f "$valgrind_log"
 }
@@ -1153,9 +1153,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -p <<< "42 is nice"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "(\"42 is nice\")= $(openssl blake2b512 <<< "42 is nice" | awk '{print $2}')"
     rm -f "$valgrind_log"
 }
@@ -1164,9 +1164,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -q -r <<< "Pity the living."
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "$(openssl blake2b512 <<< "Pity the living." | awk '{print $2}')"
     rm -f "$valgrind_log"
 }
@@ -1175,9 +1175,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b file
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "BLAKE2B (file) = $(openssl blake2b512 file | awk '{print $2}')"
     rm -f "$valgrind_log"
 }
@@ -1186,9 +1186,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -r file
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "$(openssl blake2b512 file | awk '{print $2}') file"
     rm -f "$valgrind_log"
 }
@@ -1197,9 +1197,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -s "pity those that aren't following baerista on spotify."
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "BLAKE2B (\"pity those that aren't following baerista on spotify.\") = $(echo -n "pity those that aren't following baerista on spotify." | openssl blake2b512 | awk '{print $2}')"
     rm -f "$valgrind_log"
 }
@@ -1208,9 +1208,9 @@ $(openssl sha256 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -p file <<< "be sure to handle edge cases carefully"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "(\"be sure to handle edge cases carefully\")= $(openssl blake2b512 <<< "be sure to handle edge cases carefully" | awk '{print $2}')
 BLAKE2B (file) = $(openssl blake2b512 file | awk '{print $2}')"
     rm -f "$valgrind_log"
@@ -1220,9 +1220,9 @@ BLAKE2B (file) = $(openssl blake2b512 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b file <<< "some of this will not make sense at first"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "BLAKE2B (file) = $(openssl blake2b512 file | awk '{print $2}')"
     rm -f "$valgrind_log"
 }
@@ -1231,9 +1231,9 @@ BLAKE2B (file) = $(openssl blake2b512 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -p -r file <<< "but eventually you will understand"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "(\"but eventually you will understand\")= $(openssl blake2b512 <<< "but eventually you will understand" | awk '{print $2}')
 $(openssl blake2b512 file | awk '{print $2}') file"
     rm -f "$valgrind_log"
@@ -1243,9 +1243,9 @@ $(openssl blake2b512 file | awk '{print $2}') file"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -p -s "foo" file <<< "GL HF let's go"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "(\"GL HF let's go\")= $(openssl blake2b512 <<< "GL HF let's go" | awk '{print $2}')
 BLAKE2B (\"foo\") = $(echo -n "foo" | openssl blake2b512 | awk '{print $2}')
 BLAKE2B (file) = $(openssl blake2b512 file | awk '{print $2}')"
@@ -1256,9 +1256,9 @@ BLAKE2B (file) = $(openssl blake2b512 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -r -p -s "foo" file -s "bar" <<< "one more thing"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "(\"one more thing\")= $(openssl blake2b512 <<< "one more thing" | awk '{print $2}')
 $(echo -n "foo" | openssl blake2b512 | awk '{print $2}') \"foo\"
 $(openssl blake2b512 file | awk '{print $2}') file
@@ -1271,9 +1271,9 @@ ft_ssl: blake2b: bar: No such file or directory"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -r -q -p -s "foo" file <<< "just to be extra clear"
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output "just to be extra clear
 $(openssl blake2b512 <<< "just to be extra clear" | awk '{print $2}')
 $(echo -n "foo" | openssl blake2b512 | awk '{print $2}')
@@ -1287,9 +1287,9 @@ $(openssl blake2b512 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -q 0B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2b512 0B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1298,9 +1298,9 @@ $(openssl blake2b512 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -q 1B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2b512 1B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1309,9 +1309,9 @@ $(openssl blake2b512 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -q 56B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2b512 56B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1320,9 +1320,9 @@ $(openssl blake2b512 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -q 57B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2b512 57B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1331,9 +1331,9 @@ $(openssl blake2b512 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -q 63B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2b512 63B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1342,9 +1342,9 @@ $(openssl blake2b512 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -q 64B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2b512 64B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1353,9 +1353,9 @@ $(openssl blake2b512 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -q 65B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2b512 65B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1364,9 +1364,9 @@ $(openssl blake2b512 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -q 100B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2b512 100B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1375,9 +1375,9 @@ $(openssl blake2b512 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -q 128B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2b512 128B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1386,9 +1386,9 @@ $(openssl blake2b512 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -q 10MB
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2b512 10MB | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1399,9 +1399,9 @@ $(openssl blake2b512 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -q < 0B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2b512 < 0B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1410,9 +1410,9 @@ $(openssl blake2b512 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -q < 1B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2b512 < 1B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1421,9 +1421,9 @@ $(openssl blake2b512 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -q < 56B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2b512 < 56B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1432,9 +1432,9 @@ $(openssl blake2b512 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -q < 57B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2b512 < 57B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1443,9 +1443,9 @@ $(openssl blake2b512 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -q < 63B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2b512 < 63B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1454,9 +1454,9 @@ $(openssl blake2b512 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -q < 64B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2b512 < 64B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1465,9 +1465,9 @@ $(openssl blake2b512 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -q < 65B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2b512 < 65B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1476,9 +1476,9 @@ $(openssl blake2b512 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -q < 100B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2b512 < 100B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1487,9 +1487,9 @@ $(openssl blake2b512 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -q < 128B
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2b512 < 128B | awk '{print $2}')
     rm -f "$valgrind_log"
 }
@@ -1498,9 +1498,9 @@ $(openssl blake2b512 file | awk '{print $2}')"
     local valgrind_log=$(mktemp)
     run valgrind --log-file="$valgrind_log" ../ft_ssl blake2b -q < 10MB
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    assert_success
+    [ "$?" -eq 0 ]
     assert_output $(openssl blake2b512 < 10MB | awk '{print $2}')
     rm -f "$valgrind_log"
 }

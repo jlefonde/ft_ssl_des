@@ -16,6 +16,21 @@ void clear_base64_ctx(t_context *ctx)
     free(ctx);
 }
 
+static uint8_t get_base64_char_index(char c, size_t *npad)
+{
+    if (c == '=')
+    {
+        (*npad)++;
+        return (0);
+    }
+    for (int i = 0; i < 64; i++)
+    {
+        if (c == g_base64_alphabet[i])
+            return (i);
+    }
+    return (-1);
+}
+
 static int get_fd(t_context *ctx, const char *file, int default_fd, bool is_output)
 {
     int fd = default_fd;
@@ -152,21 +167,6 @@ static void encode_base64(const t_command *cmd, t_context *ctx)
 
     if (buffer.bytes_read == -1)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_base64_ctx);
-}
-
-static uint8_t get_base64_char_index(char c, size_t *npad)
-{
-    if (c == '=')
-    {
-        (*npad)++;
-        return (0);
-    }
-    for (int i = 0; i < 64; i++)
-    {
-        if (c == g_base64_alphabet[i])
-            return (i);
-    }
-    return (-1);
 }
 
 static void decode_base64(const t_command *cmd, t_context *ctx)
