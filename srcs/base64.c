@@ -217,7 +217,7 @@ static void decode_base64(const t_command *cmd, t_context *ctx)
 
     if (buffer.out_pos)
         write_output(ctx, &buffer);
-    if (byte_count != 0 && (byte_count != 3 && npad != 0))
+    if (byte_count != 0 || (byte_count != 3 && npad != 0))
         fatal_error(ctx, cmd->name, "Invalid input", NULL, clear_base64_ctx); 
 
     if (buffer.bytes_read == -1)
