@@ -12,11 +12,12 @@ SOURCES = ssl.c \
 			blake2.c \
 			blake2s.c \
 			blake2b.c \
-			base64.c
+			base64.c \
+			des_ecb.c
 
 OBJECTS = $(addprefix $(OBJECTS_DIR)/, $(SOURCES:.c=.o))
 
-CFLAGS = -I$(HEADERS_DIR)
+CFLAGS = -I$(HEADERS_DIR) #-Wall -Wextra -Werror
 LDFLAGS = -L./libft -lft -lm
 
 all: ./libft/libft.a $(NAME)

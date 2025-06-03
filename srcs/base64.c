@@ -184,7 +184,7 @@ static void decode_base64(const t_command *cmd, t_context *ctx)
     {
         for (int i = 0; i < buffer.bytes_read; i++)
         {
-            if (buffer.in[i] == '\n')
+            if (ft_isspace(buffer.in[i]))
                 continue;
 
             bytes[byte_count] = get_base64_char_index(buffer.in[i], &npad);
