@@ -7,6 +7,8 @@ setup() {
 }
 
 setup_file() {
+    rm -rf out
+    mkdir out
     for file in "${files[@]}"; do
         if [ "$file" = "0B" ]; then
             > 0B

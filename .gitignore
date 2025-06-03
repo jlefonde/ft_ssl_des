@@ -4,3 +4,4 @@ ft_ssl
 *.o
 test/bats
 test/test_helper
+test/out
