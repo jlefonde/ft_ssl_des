@@ -28,7 +28,8 @@ typedef enum e_input_type
 {
     INPUT_STDIN,
     INPUT_FILE,
-    INPUT_STR
+    INPUT_STR,
+    INPUT_RAW
 }	t_input_type;
 
 typedef struct s_input
@@ -36,6 +37,9 @@ typedef struct s_input
     t_input_type    type;
     char            *str;
     size_t          str_pos;
+    uint8_t         *data;
+    size_t          data_len;
+    size_t          data_pos;
     int             fd;
 }	t_input;
 

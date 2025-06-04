@@ -147,7 +147,7 @@ static void sha256_print(void *output)
     free(output);
 }
 
-static void *sha256(t_input *input)
+void *sha256(t_input *input)
 {
     uint32_t *digest = malloc(8 * sizeof(uint32_t));
     if (!digest)

@@ -34,7 +34,26 @@ void print_error(const char *s1, const char *s2, const char *s3)
 
 ssize_t read_from_input(t_input *input, void* buffer, size_t nbytes)
 {
-    if (input->type == INPUT_STR)
+    if (input->type == INPUT_RAW)
+    {
+        if (!input->data)
+            return (0);
+        size_t remaining_bytes = input->data_len - input->data_pos;
+        if (!remaining_bytes)
+            return (0);
+
+        size_t to_copy = remaining_bytes < nbytes ? remaining_bytes : nbytes;
+        ft_memcpy(buffer, &input->data[input->data_pos], to_copy);
+        input->data_pos += to_copy;
+
+        printf("Reading %zu bytes from pos %zu: ", to_copy, input->data_pos - to_copy);
+        for (size_t i = 0; i < to_copy; i++)
+            printf("%02x", ((uint8_t*)buffer)[i]);
+        printf("\n");
+
+        return (to_copy);
+    }
+    else if (input->type == INPUT_STR)
     {
         if (!input->str)
             return (0);
