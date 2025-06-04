@@ -3,6 +3,15 @@
 #define SHA256_BLOCK_SIZE 64
 #define SHA256_OUT_LEN 32
 
+#include <arpa/inet.h> // for htonl
+
+uint32_t *sha256_be(t_input *input) {
+    uint32_t *hash = sha256(input); // your current sha256
+    for (int i = 0; i < 8; i++)
+        hash[i] = htonl(hash[i]);
+    return hash;
+}
+
 uint32_t *hmac_sha256(uint8_t* key, size_t key_len, uint8_t* msg, size_t msg_len)
 {
     t_input input;
@@ -17,7 +26,7 @@ uint32_t *hmac_sha256(uint8_t* key, size_t key_len, uint8_t* msg, size_t msg_len
         input.data = key;
         input.data_pos = 0;
         input.data_len = key_len;
-        void *key_hash = sha256(&input);
+        void *key_hash = sha256_be(&input);
         ft_memcpy(padded_key, key_hash, SHA256_OUT_LEN);
         key_len = SHA256_OUT_LEN;
         free(key_hash);
@@ -70,7 +79,7 @@ uint32_t *hmac_sha256(uint8_t* key, size_t key_len, uint8_t* msg, size_t msg_len
     for (int i = 0; i < SHA256_BLOCK_SIZE + msg_len; i++)
         printf("%02x", ((uint8_t*)key_xor_ipad_with_msg)[i]);
     printf("\n");
-    void *hash_key_xor_ipad_with_msg = sha256(&input);
+    void *hash_key_xor_ipad_with_msg = sha256_be(&input);
     printf("Inner hash: ");
     for (int i = 0; i < SHA256_OUT_LEN; i++)
         printf("%02x", ((uint8_t*)hash_key_xor_ipad_with_msg)[i]);
@@ -95,7 +104,7 @@ uint32_t *hmac_sha256(uint8_t* key, size_t key_len, uint8_t* msg, size_t msg_len
     for (int i = 0; i < SHA256_BLOCK_SIZE + SHA256_OUT_LEN; i++)
         printf("%02x", key_xor_opad_with_hash_key_xor_ipad_with_msg[i]);
     printf("\n");
-    uint32_t *result = (uint32_t *)sha256(&input);
+    uint32_t *result = (uint32_t *)sha256_be(&input);
 
     free(padded_key);
     free(key_xor_opad);
@@ -107,11 +116,13 @@ uint32_t *hmac_sha256(uint8_t* key, size_t key_len, uint8_t* msg, size_t msg_len
     return result;
 }
 
+#include <openssl/hmac.h>
+
 void process_des_ecb(const t_command *cmd, int argc, char **argv)
 {
-    uint8_t key[3] = { 0xAB, 0xC1, 0x23 };
-    uint8_t msg[4] = { 't', 'e', 's', 't' };
-    
+    uint8_t key[] = "ABC123";
+    uint8_t msg[] = "testqdsdsqqsd";
+
     // Debug: print key and message
     printf("Key: ");
     for (int i = 0; i < 3; i++)
@@ -120,12 +131,20 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
     for (int i = 0; i < 4; i++)
         printf("%02x", msg[i]);
     printf("\n");
-    
-    uint32_t *digest = hmac_sha256(key, 3, msg, 4);
+
+    uint32_t *digest = hmac_sha256(key, 6, msg, 13);
     printf("HMAC: ");
-    for (int i = 0; i < 8; ++i)
-        printf("%08x", digest[i]);
+    for (int i = 0; i < 32; ++i)
+        printf("%02x", ((uint8_t*)digest)[i]);
+    printf("\n");
+
+    free(digest);
+
+    unsigned int digest_len;
+    unsigned char *digest2 = HMAC(EVP_sha256(), key, 6, msg, strlen((char *)msg), NULL, &digest_len);
+    printf("HMAC: ");
+    for (int i = 0; i < digest_len; ++i)
+        printf("%02x", digest2[i]);
     printf("\n");
     
-    free(digest);
 }
