@@ -9,6 +9,6 @@ typedef struct s_hmac {
     void *(*digest_func)(t_input *input);
 }   t_hmac;
 
-uint8_t *hmac_sha256(uint8_t* key, size_t key_len, uint8_t* msg, size_t msg_len);
+void *hmac_sha256(uint8_t* key, size_t key_len, uint8_t* msg, size_t msg_len);
 
 # endif

@@ -12,7 +12,7 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
         exit(1);
     printf("HMAC: ");
     for (int i = 0; i < 32; ++i)
-        printf("%02x", digest[i]);
+        printf("%02X", digest[i]);
     printf("\n");
 
     free(digest);
@@ -21,6 +21,6 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
     unsigned char *digest2 = HMAC(EVP_sha256(), key, 6, msg, strlen((char *)msg), NULL, &digest_len);
     printf("HMAC: ");
     for (int i = 0; i < digest_len; ++i)
-        printf("%02x", digest2[i]);
+        printf("%02X", digest2[i]);
     printf("\n");
 }

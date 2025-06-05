@@ -1,15 +1,12 @@
 #include "ssl.h"
 
-#define SHA256_BLOCK_SIZE 64
-#define SHA256_OUT_LEN 32
-
-static uint8_t *pad_key(uint8_t* key, size_t key_len)
+static uint8_t *pad_key(const t_hmac* hmac, uint8_t* key, size_t key_len)
 {
-    uint8_t *padded_key = malloc(SHA256_BLOCK_SIZE);
+    uint8_t *padded_key = malloc(hmac->block_size);
     if (!padded_key)
         return (NULL);
 
-    if (key_len > SHA256_BLOCK_SIZE)
+    if (key_len > hmac->block_size)
     {
         t_input input;
     
@@ -18,35 +15,35 @@ static uint8_t *pad_key(uint8_t* key, size_t key_len)
         input.data_pos = 0;
         input.data_len = key_len;
 
-        void *key_hash = sha256(&input);
-        ft_memcpy(padded_key, key_hash, SHA256_OUT_LEN);
-        key_len = SHA256_OUT_LEN;
+        void *key_hash = hmac->digest_func(&input);
+        ft_memcpy(padded_key, key_hash, hmac->out_len);
+        key_len = hmac->out_len;
 
         free(key_hash);
     }
     else
         ft_memcpy(padded_key, key, key_len);
 
-    ft_memset(padded_key + key_len, 0x00, SHA256_BLOCK_SIZE - key_len);
+    ft_memset(padded_key + key_len, 0x00, hmac->block_size - key_len);
     return (padded_key);
 }
 
-static uint8_t *xor_key_with_pad(uint8_t* key, uint8_t pad)
+static uint8_t *xor_key_with_pad(const t_hmac* hmac, uint8_t* key, uint8_t pad)
 {
-    uint8_t *res = malloc(SHA256_BLOCK_SIZE);
+    uint8_t *res = malloc(hmac->block_size);
     if (!res)
         return (NULL);
-    for (int i = 0; i < SHA256_BLOCK_SIZE; i++)
+    for (int i = 0; i < hmac->block_size; i++)
         res[i] = key[i] ^ pad;
     return (res);
 }
 
-uint8_t *hmac_sha256(uint8_t* key, size_t key_len, uint8_t* msg, size_t msg_len)
+static void *hmac(const t_hmac* hmac, uint8_t* key, size_t key_len, uint8_t* msg, size_t msg_len)
 {
-    uint8_t *padded_key = pad_key(key, key_len);
+    uint8_t *padded_key = pad_key(hmac, key, key_len);
 
-    uint8_t *key_opad = xor_key_with_pad(padded_key, 0x5C);
-    uint8_t *key_ipad = xor_key_with_pad(padded_key, 0x36);
+    uint8_t *key_opad = xor_key_with_pad(hmac, padded_key, 0x5C);
+    uint8_t *key_ipad = xor_key_with_pad(hmac, padded_key, 0x36);
     free(padded_key);
     if (!key_opad || !key_ipad)
     {
@@ -55,7 +52,7 @@ uint8_t *hmac_sha256(uint8_t* key, size_t key_len, uint8_t* msg, size_t msg_len)
         return (NULL);
     }
 
-    uint8_t *ipad_msg = ft_memjoin(key_ipad, SHA256_BLOCK_SIZE, msg, msg_len);
+    uint8_t *ipad_msg = ft_memjoin(key_ipad, hmac->block_size, msg, msg_len);
     free(key_ipad);
     if (!ipad_msg)
     {
@@ -67,12 +64,12 @@ uint8_t *hmac_sha256(uint8_t* key, size_t key_len, uint8_t* msg, size_t msg_len)
     in.type = INPUT_MEMORY;
     in.data = ipad_msg;
     in.data_pos = 0;
-    in.data_len = SHA256_BLOCK_SIZE + msg_len;
+    in.data_len = hmac->block_size + msg_len;
 
-    void *ihash = sha256(&in);
+    void *ihash = hmac->digest_func(&in);
     free(ipad_msg);
 
-    uint8_t *opad_ihash = ft_memjoin(key_opad, SHA256_BLOCK_SIZE, ihash, SHA256_OUT_LEN);
+    uint8_t *opad_ihash = ft_memjoin(key_opad, hmac->block_size, ihash, hmac->out_len);
     free(key_opad);
     free(ihash);
     if (!opad_ihash)
@@ -80,10 +77,21 @@ uint8_t *hmac_sha256(uint8_t* key, size_t key_len, uint8_t* msg, size_t msg_len)
 
     in.data = opad_ihash;
     in.data_pos = 0;
-    in.data_len = SHA256_BLOCK_SIZE + SHA256_OUT_LEN;
+    in.data_len = hmac->block_size + hmac->out_len;
 
-    void *res = sha256(&in);
+    void *res = hmac->digest_func(&in);
     free(opad_ihash);
     
     return (res);
+}
+
+void *hmac_sha256(uint8_t* key, size_t key_len, uint8_t* msg, size_t msg_len)
+{
+    t_hmac hm;
+
+    hm.block_size = 64;
+    hm.out_len = 32;
+    hm.digest_func = sha256;
+
+    return (hmac(&hm, key, key_len, msg, msg_len));
 }
