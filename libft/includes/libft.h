@@ -60,6 +60,7 @@ void        ft_lstiter(t_list *lst, void (*f)(void *));
 void        ft_putnbr_base(int nbr, char *base);
 void        *ft_memset(void *s, int c, size_t n);
 void        *ft_memcpy(void *dest, const void *src, size_t n);
+void        *ft_memjoin(void const *s1, size_t s1_len, void const *s2, size_t s2_len);
 void        *ft_memmove(void *dest, const void *src, size_t n);
 void        *ft_memchr(const void *s, int c, size_t n);
 void        *ft_calloc(size_t nmemb, size_t size);

@@ -16,6 +16,7 @@
 # include "blake2s.h"
 # include "blake2b.h"
 # include "base64.h"
+# include "hmac.h"
 # include "des_ecb.h"
 
 typedef enum e_category_type
