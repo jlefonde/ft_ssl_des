@@ -141,11 +141,13 @@ static void sha256_final(uint8_t block[64], ssize_t bytes_read, uint64_t msg_siz
 
 static void sha256_print(void *output)
 {
-    uint32_t *digest = output;
-    for (int i = 0; i < 8; ++i)
-        ft_printf("%08x", digest[i]);
+    uint8_t *digest = output;
+    for (int i = 0; i < 32; ++i)
+        ft_printf("%02x", digest[i]);
     free(output);
 }
+
+#include <arpa/inet.h> 
 
 void *sha256(t_input *input)
 {
@@ -182,7 +184,24 @@ void *sha256(t_input *input)
         return (NULL);
     }
 
-    return (digest);
+    uint8_t *digest_bytes = malloc(32);
+    if (!digest_bytes)
+    {
+        print_error("sha256", strerror(errno), NULL);
+        free(digest);
+        return (NULL);
+    }
+
+    for (int i = 0; i < 8; ++i)
+    {
+        digest_bytes[i * 4 + 0] = (digest[i] >> 24) & 0xff;
+        digest_bytes[i * 4 + 1] = (digest[i] >> 16) & 0xff;
+        digest_bytes[i * 4 + 2] = (digest[i] >> 8) & 0xff;
+        digest_bytes[i * 4 + 3] = digest[i] & 0xff;
+    }
+    free(digest);
+
+    return (digest_bytes);
 }
 
 void process_sha256(const t_command *cmd, int argc, char **argv)

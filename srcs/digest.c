@@ -23,9 +23,9 @@ static void display_input(t_context *ctx, t_input *input, char *start, const cha
     if (is_stdin && !ctx->digest.stdin_mode)
         ft_printf("%sstdin%s", start, end);
     else if (add_quotes)
-        ft_printf("%s\"%s\"%s", start, input->str, end);
+        ft_printf("%s\"%s\"%s", start, input->data, end);
     else
-        ft_printf("%s%s%s", start, input->str, end);
+        ft_printf("%s%s%s", start, input->data, end);
 }
 
 static void print_quiet_mode(t_context *ctx, void *output)
@@ -61,8 +61,8 @@ static void handle_stdin_input(const t_command *cmd, int argc, t_context *ctx, b
 
         input->type = INPUT_STDIN;
         input->fd = STDIN_FILENO;
-        input->str = NULL;
-        input->str_pos = ctx->digest.stdin_mode ? 0 : -1;
+        input->data = NULL;
+        input->data_pos = ctx->digest.stdin_mode ? 0 : -1;
 
         ft_lstadd_front(&ctx->digest.inputs, ft_lstnew(input));
     }
@@ -125,10 +125,10 @@ t_context *parse_digest(const t_command *cmd, int argc, char **argv)
             if (!input)
                 fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_digest_ctx);
 
-            input->type = sum_mode ? INPUT_STR : INPUT_FILE;
-            input->str = ft_strdup(argv[i]);
+            input->type = sum_mode ? INPUT_MEMORY : INPUT_FILE;
+            input->data = ft_strdup(argv[i]);
             input->fd = -1;
-            input->str_pos = 0;
+            input->data_pos = 0;
 
             if (sum_mode)
                 sum_mode = false;
@@ -158,10 +158,10 @@ void process_digest(const t_command *cmd, t_context *ctx)
         t_input *input = current->content;
         if (input->type == INPUT_FILE)
         {
-            input->fd = open(input->str, O_RDONLY);
+            input->fd = open(input->data, O_RDONLY);
             if (input->fd == -1)
             {
-                print_error(cmd->name, input->str, strerror(errno));
+                print_error(cmd->name, input->data, strerror(errno));
                 free_input(input);
                 free(current);
                 current = next;

@@ -4,7 +4,7 @@ void free_input(void *content)
 {
     t_input *input = (t_input *)content;
 
-    free(input->str);
+    free(input->data);
     if (input->type == INPUT_FILE && input->fd != -1)
         close(input->fd);
     free(input);
@@ -34,7 +34,7 @@ void print_error(const char *s1, const char *s2, const char *s3)
 
 ssize_t read_from_input(t_input *input, void* buffer, size_t nbytes)
 {
-    if (input->type == INPUT_RAW)
+    if (input->type == INPUT_MEMORY)
     {
         if (!input->data)
             return (0);
@@ -45,25 +45,6 @@ ssize_t read_from_input(t_input *input, void* buffer, size_t nbytes)
         size_t to_copy = remaining_bytes < nbytes ? remaining_bytes : nbytes;
         ft_memcpy(buffer, &input->data[input->data_pos], to_copy);
         input->data_pos += to_copy;
-
-        printf("Reading %zu bytes from pos %zu: ", to_copy, input->data_pos - to_copy);
-        for (size_t i = 0; i < to_copy; i++)
-            printf("%02x", ((uint8_t*)buffer)[i]);
-        printf("\n");
-
-        return (to_copy);
-    }
-    else if (input->type == INPUT_STR)
-    {
-        if (!input->str)
-            return (0);
-        size_t remaining_bytes = ft_strlen(&input->str[input->str_pos]);
-        if (!remaining_bytes)
-            return (0);
-
-        size_t to_copy = remaining_bytes < nbytes ? remaining_bytes : nbytes;
-        ft_memcpy(buffer, &input->str[input->str_pos], to_copy);
-        input->str_pos += to_copy;
 
         return (to_copy);
     }
@@ -77,16 +58,16 @@ ssize_t read_from_input(t_input *input, void* buffer, size_t nbytes)
             bytes_read = read(input->fd, buffer + total_bytes_read, nbytes - total_bytes_read);
             if (bytes_read <= 0)
                 break;
-            if (input->str_pos == 0)
+            if (input->data_pos == 0)
             {
                 ((char *)buffer)[bytes_read] = 0;
-                if (!input->str)
-                    input->str = ft_strdup(buffer);
+                if (!input->data)
+                    input->data = ft_strdup(buffer);
                 else
                 {
-                    char *joined = ft_strjoin(input->str, buffer);
-                    free(input->str);
-                    input->str = joined;
+                    char *joined = ft_strjoin(input->data, buffer);
+                    free(input->data);
+                    input->data = joined;
                 }
             }
             total_bytes_read += bytes_read;
