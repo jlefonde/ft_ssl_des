@@ -14,32 +14,35 @@ uint8_t *F(void *(*prf)(uint8_t *key, size_t key_len, uint8_t *msg, size_t msg_l
     salt_i[salt_len + 2] = (i >> 8) & 0xFF; 
     salt_i[salt_len + 3] = i & 0xFF;
 
-    uint8_t *u_1 = prf(password, password_len, salt_i, salt_len + 4);
+    uint8_t *u = prf(password, password_len, salt_i, salt_len + 4);
     free(salt_i);
-    if (!u_1)
+    if (!u)
         return (NULL);
 
     uint8_t *res = malloc(h_len);
     if (!res)
     {
-        free(u_1);
+        free(u);
         return (NULL);
     }
 
-    ft_memcpy(res, u_1, h_len);
-    free(u_1);
+    ft_memcpy(res, u, h_len);
 
-    for (int j = 2; j < c; j++)
+    for (int j = 1; j < c; j++)
     {
-        uint8_t *u = prf(password, password_len, res, h_len);
-        if (!u)
+        uint8_t *u_next = prf(password, password_len, u, h_len);
+        if (!u_next)
         {
+            free(u);
             free(res);
             return (NULL);
         }
+
         for (int k = 0; k < h_len; k++)
-            res[k] ^= u[k];
+            res[k] ^= u_next[k];
+
         free(u);
+        u = u_next;
     }
 
     return (res);
@@ -72,5 +75,6 @@ uint8_t *pbkdf2(
         ft_memcpy(dk + (h_len * i), t, ((i + 1) == l) ? r : h_len);
         free(t);
     }
+
     return (dk);
 }
