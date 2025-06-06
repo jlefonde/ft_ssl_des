@@ -72,6 +72,7 @@ typedef union u_context
         char    *password;
         bool    base64_mode;
         bool    decrypt_mode;
+        bool    pbkdf2_mode;
     }   des;
 }	t_context;
 

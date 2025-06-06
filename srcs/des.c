@@ -26,6 +26,7 @@ t_context *parse_des(const t_command *cmd, int argc, char **argv)
     ctx->des.iv = NULL;
     ctx->des.decrypt_mode = false;
     ctx->des.base64_mode = false;
+    ctx->des.pbkdf2_mode = false;
 
     char *in_file = NULL;
     char *out_file = NULL;
@@ -47,6 +48,8 @@ t_context *parse_des(const t_command *cmd, int argc, char **argv)
                 ctx->des.decrypt_mode = false;
             else if (ft_strcmp(argv[i], "-a") == 0)
                 ctx->des.base64_mode = true;
+            else if (ft_strcmp(argv[i], "-P") == 0)
+                ctx->des.pbkdf2_mode = true;
             else if (ft_strcmp(argv[i], "-i") == 0)
                 in_mode = true;
             else if (ft_strcmp(argv[i], "-o") == 0)
