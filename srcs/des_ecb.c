@@ -6,32 +6,13 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
 {    
     uint8_t password[] = "ABC123ABC123ABC123";
     uint8_t salt[] = "DEF456DEF456DEF456";
-    uint8_t *key = pbkdf2(hmac_sha256, 32, password, 18, salt, 18, 1000, 64);
+    uint8_t *dk = pbkdf2(hmac_sha256, 32, password, 18, salt, 18, 1000, 32);
 
-    if (key)
+    if (dk)
     {
-        // printf("KEY: ");
-        // for (int i = 0; i < 16; i++)
-        //     printf("%02X", key[i]);
-        // printf("\n");
+        printf("KEY: ");
+        for (int i = 0; i < 32; i++)
+            printf("%02X", dk[i]);
+        printf("\n");
     }
-
-    // uint8_t key[] = "ABC123";
-    // uint8_t msg[] = "test";
-    // uint8_t *digest = hmac_sha256(key, 6, msg, 4);
-    // if (!digest)
-    //     exit(1);
-    // printf("HMAC: ");
-    // for (int i = 0; i < 32; ++i)
-    //     printf("%02X", digest[i]);
-    // printf("\n");
-
-    // free(digest);
-
-    // unsigned int digest_len;
-    // unsigned char *digest2 = HMAC(EVP_sha256(), key, 6, msg, strlen((char *)msg), NULL, &digest_len);
-    // printf("HMAC: ");
-    // for (int i = 0; i < digest_len; ++i)
-    //     printf("%02X", digest2[i]);
-    // printf("\n");
 }
