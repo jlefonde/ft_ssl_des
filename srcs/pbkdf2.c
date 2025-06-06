@@ -41,7 +41,7 @@
 
 //         where the function F is defined as the exclusive-or sum of the
 //         first c iterates of the underlying pseudorandom function PRF
-//         applied to the password P and the concatenation of the salt S
+//         applied to the password P and the concatenation of the salt Sz
 //         and the block index i:
 //                 F (P, S, c, i) = U_1 \xor U_2 \xor ... \xor U_c
 
@@ -70,10 +70,49 @@
 
 uint8_t *F(void *(*prf)(uint8_t *key, size_t key_len, uint8_t *msg, size_t msg_len),
            size_t hLen, uint8_t *password, size_t password_len,
-           uint8_t *salt, size_t salt_len, size_t c, size_t i)
+           uint8_t *salt, size_t salt_len, size_t c, uint32_t i)
 {
-    uint8_t * prf_res = prf(password, password_len, salt, salt_len);
-    return (prf_res);
+    uint8_t *salt_i = malloc(salt_len + 4);
+    if (!salt_i)
+        return (NULL);
+
+    ft_memcpy(salt_i, salt, salt_len);
+    salt_i[salt_len] = (i >> 24) & 0xFF;
+    salt_i[salt_len + 1] = (i >> 16) & 0xFF; 
+    salt_i[salt_len + 2] = (i >> 8) & 0xFF; 
+    salt_i[salt_len + 3] = i & 0xFF;
+
+    uint8_t *u_1 = prf(password, password_len, salt_i, salt_len + 4);
+    free(salt_i);
+    if (!u_1)
+        return (NULL);
+
+    uint8_t *res = malloc(hLen);
+    if (!res)
+    {
+        free(u_1);
+        return (NULL);
+    }
+
+    ft_memcpy(res, u_1, hLen);
+    free(u_1);
+
+    for (int j = 2; j < c; j++)
+    {
+        uint8_t *u_j = prf(password, password_len, res, hLen);
+        if (!u_j)
+        {
+            free(res);
+            return (NULL);
+        }
+
+        for (int k = 0; k < hLen; k++)
+            res[k] ^= u_j[k];
+
+        free(u_j);
+    }
+
+    return (res);
 }
 
 uint8_t *pbkdf2(
@@ -96,8 +135,8 @@ uint8_t *pbkdf2(
     size_t r = dkLen - (l - 1) * hLen;
 
     uint8_t **t = malloc(l * sizeof(uint8_t *));
-    for (int i = 1; i <= l; i++)
-        t[i - 1] = F(prf, hLen, password, password_len, salt, salt_len, c, i);
+    for (int i = 0; i < l; i++)
+        t[i] = F(prf, hLen, password, password_len, salt, salt_len, c, i + 1);
 
     for (int i = 0; i < l; i++)
     {
