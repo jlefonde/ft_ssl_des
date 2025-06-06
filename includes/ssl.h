@@ -61,6 +61,18 @@ typedef union u_context
         int     out;
         bool    decode_mode;
     }   base64;
+
+    struct
+    {
+        int     in;
+        int     out;
+        char    *key;
+        char    *salt;
+        char    *iv;
+        char    *password;
+        bool    base64_mode;
+        bool    decrypt_mode;
+    }   des;
 }	t_context;
 
 typedef struct s_category
@@ -79,9 +91,12 @@ void free_input(void *content);
 void fatal_error(t_context *ctx, const char *s1, const char *s2, const char *s3, void (*free_ctx)(t_context *ctx));
 void print_error(const char *s1, const char *s2, const char *s3);
 ssize_t read_from_input(t_input *input, void* buffer, size_t nbytes);
+int get_fd(t_context *ctx, const char *file, int default_fd, bool is_output);
 
 t_context *parse_digest(const t_command *cmd, int argc, char **argv);
 void process_digest(const t_command *cmd, t_context *ctx);
+
+t_context *parse_des(const t_command *cmd, int argc, char **argv);
 
 void clear_digest_ctx(t_context *ctx);
 void clear_base64_ctx(t_context *ctx);

@@ -1,8 +1,13 @@
 #include "ssl.h"
 
-uint8_t *F(void *(*prf)(uint8_t *key, size_t key_len, uint8_t *msg, size_t msg_len),
-           size_t h_len, uint8_t *password, size_t password_len,
-           uint8_t *salt, size_t salt_len, size_t c, uint32_t i)
+static uint8_t *F(void *(*prf)(uint8_t *key, size_t key_len, uint8_t *msg, size_t msg_len),
+           size_t h_len,
+           const char *password,
+           size_t password_len,
+           const uint8_t *salt,
+           size_t salt_len,
+           size_t c,
+           uint32_t i)
 {
     uint8_t *salt_i = malloc(salt_len + 4);
     if (!salt_i)
@@ -45,29 +50,27 @@ uint8_t *F(void *(*prf)(uint8_t *key, size_t key_len, uint8_t *msg, size_t msg_l
         u = u_next;
     }
 
+    free(u);
     return (res);
 }
 
 uint8_t *pbkdf2(
     void *(*prf)(uint8_t *key, size_t key_len, uint8_t *msg, size_t msg_len),
     size_t h_len,
-    uint8_t *password,
+    const char *password,
     size_t password_len, 
-    uint8_t *salt,
+    const uint8_t *salt,
     size_t salt_len, 
     size_t c,
-    size_t dk_len)
+    int dk_len)
 {
-    if (dk_len > (4294967295 * h_len))
-    {
-        print_error("pbkdf2", "Derived key too long", NULL);
-        return (NULL);
-    }
-
     size_t l = ceil((double)dk_len / (double)h_len);
+
     size_t r = dk_len - (l - 1) * h_len;
 
     uint8_t *dk = malloc(dk_len);
+    if (!dk)
+        return (NULL);
     for (int i = 0; i < l; i++)
     {
         uint8_t *t = F(prf, h_len, password, password_len, salt, salt_len, c, i + 1);

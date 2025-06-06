@@ -76,3 +76,17 @@ ssize_t read_from_input(t_input *input, void* buffer, size_t nbytes)
     }
     return (read(input->fd, buffer, nbytes));
 }
+
+int get_fd(t_context *ctx, const char *file, int default_fd, bool is_output)
+{
+    int fd = default_fd;
+    if (file)
+    {
+        int flags = is_output ? (O_WRONLY | O_CREAT | O_TRUNC) : O_RDONLY;
+
+        fd = open(file, flags, is_output ? 0644 : 0);
+        if (fd == -1)
+            fatal_error(ctx, file, strerror(errno), NULL, clear_base64_ctx);
+    }
+    return (fd);
+}
