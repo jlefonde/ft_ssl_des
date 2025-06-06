@@ -77,22 +77,22 @@ t_context *parse_des(const t_command *cmd, int argc, char **argv)
         }
         else if (key_mode)
         {
-            ctx->des.key = argv[i];
+            ctx->des.key = ft_strdup(argv[i]);
             key_mode = false;
         }
         else if (password_mode)
         {
-            ctx->des.password = argv[i];
+            ctx->des.password = ft_strdup(argv[i]);
             password_mode = false;
         }
         else if (salt_mode)
         {
-            ctx->des.salt = argv[i];
+            ctx->des.salt = ft_strdup(argv[i]);
             salt_mode = false;
         }
         else if (iv_mode)
         {
-            ctx->des.iv = argv[i];
+            ctx->des.iv = ft_strdup(argv[i]);
             iv_mode = false;
         }
         else
