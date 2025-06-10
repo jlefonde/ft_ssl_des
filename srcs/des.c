@@ -214,28 +214,41 @@ t_context *parse_des(const t_command *cmd, int argc, char **argv)
 
 uint64_t apply_block_permutation(uint64_t input, const size_t *p_arr)
 {
-    uint64_t p = 0;
+    uint64_t permutation = 0;
 
     for (int i = 0; i < 64; i++)
     {
         if ((input >> (p_arr[i] - 1)) & 1)
-            p |= ((uint64_t)1 << (63 - i));
+            permutation |= ((uint64_t)1 << (63 - i));
     }
 
-    return (p);
+    return (permutation);
 }
 
-uint32_t apply_feistel_permutation(uint32_t input, const size_t *p_arr)
+uint32_t apply_feistel_expansion(uint32_t input)
 {
-    uint32_t p = 0;
+    uint32_t expansion = 0;
+
+    for (int i = 0; i < 48; i++)
+    {
+        if (input & ((uint32_t)1 << (g_e[i] - 1)))
+            expansion |= ((uint32_t)1 << (47 - i));
+    }
+
+    return (expansion);
+}
+
+uint32_t apply_feistel_permutation(uint32_t input)
+{
+    uint32_t permutation = 0;
 
     for (int i = 0; i < 32; i++)
     {
-        if (input & ((uint32_t)1 << (p_arr[i] - 1)))
-            p |= ((uint32_t)1 << (31 - i));
+        if (input & ((uint32_t)1 << (g_p[i] - 1)))
+            permutation |= ((uint32_t)1 << (31 - i));
     }
 
-    return (p);
+    return (permutation);
 }
 
 void print_bits(uint64_t value)
@@ -248,7 +261,7 @@ void print_bits(uint64_t value)
     printf("\n");
 }
 
-uint32_t feistel(uint32_t input)
+uint32_t feistel(uint32_t half_block, uint64_t subkey)
 {
     return 0;
 }
