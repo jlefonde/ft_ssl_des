@@ -12,39 +12,43 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
 {   
     t_context *ctx = parse_des(cmd, argc, argv);
 
-    int dk_len = 8;
-    int urandom_fd = open("/dev/urandom", O_RDONLY);
-    uint8_t salt[SALT_LEN]; 
-    ssize_t bytes_read = read(urandom_fd, salt, SALT_LEN);
-    close(urandom_fd);
+    uint64_t input = 2;
 
-    char password[PASSWORD_MAX_LEN];
-    if (!readpassphrase("enter DES-ECB encryption password: ", password, PASSWORD_MAX_LEN, RPP_REQUIRE_TTY))
-        return; // ERROR
+    des(input);
 
-    char password_verify[PASSWORD_MAX_LEN];
-    if (!readpassphrase("Verifying - enter DES-ECB encryption password: ", password_verify, PASSWORD_MAX_LEN, RPP_REQUIRE_TTY))
-        return; // ERROR
+    // int dk_len = 8;
+    // int urandom_fd = open("/dev/urandom", O_RDONLY);
+    // uint8_t salt[SALT_LEN]; 
+    // ssize_t bytes_read = read(urandom_fd, salt, SALT_LEN);
+    // close(urandom_fd);
 
-    if (ft_strcmp(password, password_verify) != 0)
-    {
-        print_error(cmd->name, "Password mismatch", NULL);
-        return;
-    }
+    // char password[PASSWORD_MAX_LEN];
+    // if (!readpassphrase("enter DES-ECB encryption password: ", password, PASSWORD_MAX_LEN, RPP_REQUIRE_TTY))
+    //     return; // ERROR
 
-    if (!ft_strlen(password))
-        return; // NO PASSWORD GIVEN
+    // char password_verify[PASSWORD_MAX_LEN];
+    // if (!readpassphrase("Verifying - enter DES-ECB encryption password: ", password_verify, PASSWORD_MAX_LEN, RPP_REQUIRE_TTY))
+    //     return; // ERROR
 
-    uint8_t *dk = pbkdf2(hmac_sha256, 32, password, ft_strlen(password), salt, SALT_LEN, 1000, dk_len);
+    // if (ft_strcmp(password, password_verify) != 0)
+    // {
+    //     print_error(cmd->name, "Password mismatch", NULL);
+    //     return;
+    // }
 
-    ft_printf("salt=");
-    for (int i = 0; i < SALT_LEN; i++)
-        ft_printf("%02X", salt[i]);
-    ft_printf("\nkey=");
-    for (int i = 0; i < dk_len; i++)
-        ft_printf("%02X", dk[i]);
-    ft_printf("\n");
-    free(dk);
+    // if (!ft_strlen(password))
+    //     return; // NO PASSWORD GIVEN
+
+    // uint8_t *dk = pbkdf2(hmac_sha256, 32, password, ft_strlen(password), salt, SALT_LEN, 1000, dk_len);
+
+    // ft_printf("salt=");
+    // for (int i = 0; i < SALT_LEN; i++)
+    //     ft_printf("%02X", salt[i]);
+    // ft_printf("\nkey=");
+    // for (int i = 0; i < dk_len; i++)
+    //     ft_printf("%02X", dk[i]);
+    // ft_printf("\n");
+    // free(dk);
 
     // unsigned char *out;
     // PKCS5_PBKDF2_HMAC(password, ft_strlen(password), salt, SALT_LEN, 1000, EVP_sha256(), dk_len, out);

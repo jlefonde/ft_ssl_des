@@ -98,6 +98,7 @@ t_context *parse_digest(const t_command *cmd, int argc, char **argv);
 void process_digest(const t_command *cmd, t_context *ctx);
 
 t_context *parse_des(const t_command *cmd, int argc, char **argv);
+void des(uint64_t input);
 
 void clear_digest_ctx(t_context *ctx);
 void clear_base64_ctx(t_context *ctx);
