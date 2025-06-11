@@ -12,9 +12,10 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
 {   
     t_context *ctx = parse_des(cmd, argc, argv);
 
-    uint64_t input = 2;
+    uint64_t input = 0x0123456789ABCDEF;
+    uint64_t key = 0x133457799BBCDFF1;
 
-    des(input);
+    uint64_t out = des(input, key);
 
     // int dk_len = 8;
     // int urandom_fd = open("/dev/urandom", O_RDONLY);

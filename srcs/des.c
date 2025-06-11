@@ -14,7 +14,7 @@ static const size_t g_fp[64] = {
     34, 2, 42, 10, 50, 18, 58, 26, 33, 1, 41,  9, 49, 17, 57, 25
 };
 
-static const size_t g_e[48] = {
+static const size_t g_exp[48] = {
     32,  1,  2,  3,  4,  5,  4,  5,  6,  7,  8,  9,  8,  9, 10, 11, 
     12, 13, 12, 13, 14, 15, 16, 17, 16, 17, 18, 19, 20, 21, 20, 21,
     22, 23, 24, 25, 24, 25, 26, 27, 28, 29, 28, 29, 30, 31, 32,  1
@@ -39,7 +39,7 @@ static const size_t g_pc2[48] = {
     44, 49, 39, 56, 34, 53, 46, 42, 50, 36, 29, 32
 };
 
-static const size_t g_s[8][4][16] = {
+static const uint8_t g_sbox[8][4][16] = {
     { 
         { 14,  4, 13,  1,  2, 15, 11,  8,  3, 10,  6, 12,  5,  9,  0,  7 },
         {  0, 15,  7,  4, 14,  2, 13,  1, 10,  6, 12, 11,  9,  5,  3,  8 },
@@ -212,86 +212,99 @@ t_context *parse_des(const t_command *cmd, int argc, char **argv)
     return (ctx);
 }
 
-uint64_t apply_block_permutation(uint64_t input, const size_t *p_arr)
+static uint64_t permute(uint64_t block, size_t block_size, const size_t *p_arr, size_t out_size)
 {
     uint64_t permutation = 0;
 
-    for (int i = 0; i < 64; i++)
+    for (int i = 0; i < out_size; i++)
     {
-        if ((input >> (p_arr[i] - 1)) & 1)
-            permutation |= ((uint64_t)1 << (63 - i));
+        size_t block_bit_pos = p_arr[i] - 1;
+
+        if ((block >> (block_size - 1 - block_bit_pos)) & 1)
+            permutation |= ((uint64_t)1 << (out_size - 1 - i));
     }
 
     return (permutation);
 }
 
-uint32_t apply_feistel_expansion(uint32_t input)
+static uint64_t *key_scheduler(uint64_t key)
 {
-    uint32_t expansion = 0;
+    uint64_t *subkeys = malloc(16 * sizeof(uint64_t));
+    if (!subkeys)
+        return (NULL);
 
-    for (int i = 0; i < 48; i++)
-    {
-        if (input & ((uint32_t)1 << (g_e[i] - 1)))
-            expansion |= ((uint32_t)1 << (47 - i));
-    }
+    uint64_t pc1 = permute(key, 64, g_pc1, 56);
 
-    return (expansion);
-}
-
-uint32_t apply_feistel_permutation(uint32_t input)
-{
-    uint32_t permutation = 0;
-
-    for (int i = 0; i < 32; i++)
-    {
-        if (input & ((uint32_t)1 << (g_p[i] - 1)))
-            permutation |= ((uint32_t)1 << (31 - i));
-    }
-
-    return (permutation);
-}
-
-void print_bits(uint64_t value)
-{
-    for (int i = 63; i >= 0; i--)
-    {
-        printf("%lu", (value >> i) & 1);
-        if (i % 8 == 0) printf(" ");
-    }
-    printf("\n");
-}
-
-uint32_t feistel(uint32_t half_block, uint64_t subkey)
-{
-    return 0;
-}
-
-void des(uint64_t input)
-{   
-    printf("input:\t%#018lx\n", input);
-    uint64_t ip = apply_block_permutation(input, g_ip);
-    printf("ip:\t%#018lx\n", ip);
-
-    uint32_t left_half = (ip & 0xFFFFFFFF00000000) >> 32;
-    uint32_t right_half = ip & 0xFFFFFFFF;
-
-    printf("left:\t%#010x\n", left_half);
-    printf("right:\t%#010x\n", right_half);
+    uint32_t left_half = (pc1 >> 28) & 0xFFFFFFF;
+    uint32_t right_half = pc1 & 0xFFFFFFF;
 
     for (int i = 0; i < 16; i++)
     {
-        uint32_t next_right_half = feistel(right_half) ^ left_half;
+        left_half = rotate_left_28(left_half, g_rot[i]);
+        right_half = rotate_left_28(right_half, g_rot[i]);
+
+        uint64_t combined = ((uint64_t)left_half << 28) | right_half;
+        subkeys[i] = permute(combined, 56, g_pc2, 48);
+    }
+
+    return (subkeys);
+}
+
+static uint32_t substitute(uint64_t key_mix)
+{
+    uint32_t substitution = 0;
+
+    for (int i = 0; i < 8; i++)
+    {
+        uint8_t s = (key_mix >> (48 - (i + 1) * 6)) & 0b00111111;
+
+        uint8_t row = ((s >> 4) & 0b00000010) | s & 1;
+        uint8_t col = (s >> 1) & 0b00001111;
+
+        substitution |= g_sbox[i][row][col];
+        if (i < 7)
+            substitution <<= 4;
+    }
+
+    return (substitution);
+}
+
+static uint32_t feistel(uint32_t half_block, uint64_t subkey)
+{
+    uint64_t expansion = permute(half_block, 32, g_exp, 48);
+
+    uint32_t substitution = substitute(expansion ^ subkey);
+
+    uint32_t permutation = permute(substitution, 32, g_p, 32);
+
+    return (permutation);
+}
+
+uint64_t des(uint64_t input, uint64_t key)
+{
+    uint64_t ip = permute(input, 64, g_ip, 64);
+
+    uint32_t left_half = (ip >> 32) & 0xFFFFFFFF;
+    uint32_t right_half = ip & 0xFFFFFFFF;
+
+    uint64_t *subkeys = key_scheduler(key);
+    if (!subkeys)
+        return (NULL);
+    
+    for (int i = 0; i < 16; i++)
+    {
+        uint32_t next_right_half = feistel(right_half, subkeys[i]) ^ left_half;
 
         left_half = right_half;
         right_half = next_right_half;
     }
 
-    printf("left:\t%#010x\n", left_half);
-    printf("right:\t%#010x\n", right_half);
+    uint64_t combined = ((uint64_t)right_half << 32) | left_half;
+        
+    uint64_t fp = permute(combined, 64, g_fp, 64);
+    free(subkeys);
 
-    uint64_t combined_halves = ((uint64_t)right_half << 32) | left_half;
-    printf("comb:\t%#018lx\n", combined_halves);
+    printf("%lX\n", fp);
 
-    uint64_t fp = apply_block_permutation(combined_halves, g_fp);
-    printf("fp:\t%#018lx\n", fp);
+    return (fp);
 }

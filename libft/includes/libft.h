@@ -83,8 +83,8 @@ long        ft_atol(const char *nptr);
 uint16_t    ft_bswap16(uint16_t x);
 uint32_t    ft_bswap32(uint32_t x);
 uint64_t    ft_bswap64(uint64_t x);
-uint32_t    ft_rotate_left_32(uint32_t X, uint32_t N);
-uint32_t    ft_rotate_right_32(uint32_t X, uint32_t N);
+uint32_t    ft_rotate_left_32(uint32_t x, size_t n);
+uint32_t    ft_rotate_right_32(uint32_t x, size_t n);
 uint64_t    ft_rotate_left_64(uint64_t X, uint64_t N);
 uint64_t    ft_rotate_right_64(uint64_t X, uint64_t N);
 

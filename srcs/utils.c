@@ -90,3 +90,9 @@ int get_fd(t_context *ctx, const char *file, int default_fd, bool is_output)
     }
     return (fd);
 }
+
+uint32_t rotate_left_28(uint32_t x, size_t n)
+{
+    x &= 0xFFFFFFF;
+    return (((x << n) | (x >> (28 - n))) & 0xFFFFFFF);
+}
