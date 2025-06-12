@@ -62,12 +62,12 @@ ssize_t read_from_input(t_input *input, void* buffer, size_t nbytes)
             {
                 ((char *)buffer)[bytes_read] = 0;
                 if (!input->data)
-                    input->data = ft_strdup(buffer);
+                    input->data = (uint8_t *)ft_strdup(buffer);
                 else
                 {
-                    char *joined = ft_strjoin(input->data, buffer);
+                    char *joined = ft_strjoin((char *)input->data, buffer);
                     free(input->data);
-                    input->data = joined;
+                    input->data = (uint8_t *)joined;
                 }
             }
             total_bytes_read += bytes_read;

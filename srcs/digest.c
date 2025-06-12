@@ -126,7 +126,7 @@ t_context *parse_digest(const t_command *cmd, int argc, char **argv)
                 fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_digest_ctx);
 
             input->type = sum_mode ? INPUT_MEMORY : INPUT_FILE;
-            input->data = ft_strdup(argv[i]);
+            input->data = (uint8_t *)ft_strdup(argv[i]);
             input->fd = -1;
             input->data_pos = 0;
 
@@ -158,10 +158,10 @@ void process_digest(const t_command *cmd, t_context *ctx)
         t_input *input = current->content;
         if (input->type == INPUT_FILE)
         {
-            input->fd = open(input->data, O_RDONLY);
+            input->fd = open((char *)input->data, O_RDONLY);
             if (input->fd == -1)
             {
-                print_error(cmd->name, input->data, strerror(errno));
+                print_error(cmd->name, (char *)input->data, strerror(errno));
                 free_input(input);
                 free(current);
                 current = next;

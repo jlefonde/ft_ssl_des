@@ -30,7 +30,7 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
 
         uint64_t input = 0x0123456789ABCDEF;
         uint64_t d_res = des(input, subkeys, ctx->des.decrypt_mode);
-        printf("%lX\n", d_res);
+        ft_printf("%lX\n", d_res);
     }
 
     clear_des_ctx(ctx);

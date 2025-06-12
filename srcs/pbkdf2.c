@@ -1,13 +1,13 @@
 #include "ssl.h"
 
 static uint8_t *F(void *(*prf)(uint8_t *key, size_t key_len, uint8_t *msg, size_t msg_len),
-           size_t h_len,
-           const char *password,
-           size_t password_len,
-           const uint8_t *salt,
-           size_t salt_len,
-           size_t c,
-           uint32_t i)
+    size_t h_len,
+    char *password,
+    size_t password_len,
+    uint8_t *salt,
+    size_t salt_len,
+    size_t c,
+    uint32_t i)
 {
     uint8_t *salt_i = malloc(salt_len + 4);
     if (!salt_i)
@@ -19,7 +19,7 @@ static uint8_t *F(void *(*prf)(uint8_t *key, size_t key_len, uint8_t *msg, size_
     salt_i[salt_len + 2] = (i >> 8) & 0xFF; 
     salt_i[salt_len + 3] = i & 0xFF;
 
-    uint8_t *u = prf(password, password_len, salt_i, salt_len + 4);
+    uint8_t *u = prf((uint8_t *)password, password_len, salt_i, salt_len + 4);
     free(salt_i);
     if (!u)
         return (NULL);
@@ -35,7 +35,7 @@ static uint8_t *F(void *(*prf)(uint8_t *key, size_t key_len, uint8_t *msg, size_
 
     for (int j = 1; j < c; j++)
     {
-        uint8_t *u_next = prf(password, password_len, u, h_len);
+        uint8_t *u_next = prf((uint8_t *)password, password_len, u, h_len);
         if (!u_next)
         {
             free(u);
@@ -57,9 +57,9 @@ static uint8_t *F(void *(*prf)(uint8_t *key, size_t key_len, uint8_t *msg, size_
 uint8_t *pbkdf2(
     void *(*prf)(uint8_t *key, size_t key_len, uint8_t *msg, size_t msg_len),
     size_t h_len,
-    const char *password,
+    char *password,
     size_t password_len, 
-    const uint8_t *salt,
+    uint8_t *salt,
     size_t salt_len, 
     size_t c,
     int dk_len)
