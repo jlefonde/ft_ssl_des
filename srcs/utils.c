@@ -96,3 +96,15 @@ uint32_t rotate_left_28(uint32_t x, size_t n)
     x &= 0xFFFFFFF;
     return (((x << n) | (x >> (28 - n))) & 0xFFFFFFF);
 }
+
+uint8_t hex_to_value(char c)
+{
+    const char hex[] = "0123456789ABCDEF";
+
+    for (int i = 0; i < 16; i++)
+    {
+        if (ft_tolower(c) == ft_tolower(hex[i]))
+            return (i);
+    }
+    return (-1);
+}
