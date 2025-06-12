@@ -11,7 +11,8 @@ static const t_command g_commands[] = {
     { "blake2s", &g_categories[CATEGORY_DIGEST], process_blake2s },
     { "blake2b", &g_categories[CATEGORY_DIGEST], process_blake2b },
     { "base64", &g_categories[CATEGORY_CIPHER], process_base64 },
-    { "des-ecb", &g_categories[CATEGORY_CIPHER], process_des_ecb }
+    { "des-ecb", &g_categories[CATEGORY_CIPHER], process_des_ecb },
+    { "des-cbc", &g_categories[CATEGORY_CIPHER], process_des_cbc },
 };
 
 static const t_command *get_command(char *cmd)

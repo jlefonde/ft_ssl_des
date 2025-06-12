@@ -16,7 +16,8 @@ SOURCES = ssl.c \
 			hmac.c \
 			pbkdf2.c \
 			des.c \
-			des_ecb.c
+			des_ecb.c \
+			des_cbc.c \
 
 OBJECTS = $(addprefix $(OBJECTS_DIR)/, $(SOURCES:.c=.o))
 

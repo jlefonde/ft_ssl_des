@@ -19,10 +19,7 @@
 # include "base64.h"
 # include "hmac.h"
 # include "pbkdf2.h"
-# include "des_ecb.h"
-
-#define PASSWORD_MAX_LEN 128
-#define DES_SALT_LEN 8
+# include "des.h"
 
 typedef enum e_category_type
 {
@@ -104,10 +101,11 @@ t_context *parse_digest(const t_command *cmd, int argc, char **argv);
 void process_digest(const t_command *cmd, t_context *ctx);
 
 t_context *parse_des(const t_command *cmd, int argc, char **argv);
-uint64_t des(uint64_t input, uint64_t key);
+uint64_t des(uint64_t input, uint64_t *subkeys, bool decrypt_mode);
 uint8_t *generate_random_bytes(const t_command *cmd, t_context *ctx, size_t nbytes);
 char *ask_password(const t_command *cmd, t_context *ctx);
 void des_print_mode(t_context *ctx, bool show_iv);
+uint64_t *key_scheduler(uint64_t key);
 
 void clear_digest_ctx(t_context *ctx);
 void clear_base64_ctx(t_context *ctx);

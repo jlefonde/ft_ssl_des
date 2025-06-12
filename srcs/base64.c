@@ -85,7 +85,12 @@ static t_context *parse_base64(const t_command *cmd, int argc, char **argv)
         fatal_error(ctx, cmd->name, NULL, "Option -o needs a value", clear_base64_ctx);
 
     ctx->base64.in = get_fd(ctx, in_file, ctx->base64.in, false);
+    if (ctx->base64.in == -1)
+            fatal_error(ctx, in_file, strerror(errno), NULL, clear_base64_ctx);
+
     ctx->base64.out = get_fd(ctx, out_file, ctx->base64.out, true);
+    if (ctx->base64.out == -1)
+            fatal_error(ctx, out_file, strerror(errno), NULL, clear_base64_ctx);
 
     return (ctx);
 }

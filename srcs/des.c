@@ -96,6 +96,10 @@ static const size_t g_rot[16] = {
 
 void clear_des_ctx(t_context *ctx)
 {
+    free(ctx->des.password);
+    free(ctx->des.key);
+    free(ctx->des.salt);
+    free(ctx->des.iv);
     if (ctx->des.in != STDIN_FILENO)
         close(ctx->des.in);
     if (ctx->des.out != STDOUT_FILENO)
@@ -105,10 +109,10 @@ void clear_des_ctx(t_context *ctx)
 
 void print_hex_str(uint8_t *hex, const char *label)
 {
-    printf("%s=", label);
+    ft_printf("%s=", label);
     for (int i = 0; i < 8; i++)
-        printf("%02X", hex[i]);
-    printf("\n");
+        ft_printf("%02X", hex[i]);
+    ft_printf("\n");
 }
 
 uint8_t *generate_random_bytes(const t_command *cmd, t_context *ctx, size_t nbytes)
@@ -144,11 +148,14 @@ void des_print_mode(t_context *ctx, bool show_iv)
         print_hex_str(ctx->des.iv, "iv");
 }
 
-uint8_t parse_hex_digit(const t_command *cmd, t_context *ctx, char c)
+uint8_t parse_hex_digit(const t_command *cmd, t_context *ctx, char c, uint8_t *hex)
 {
     uint8_t hex_value = hex_to_value(c);
     if (hex_value > 15)
+    {
+        free(hex);
         fatal_error(ctx, cmd->name, "Invalid hex value", NULL, clear_des_ctx);
+    }
     return (hex_value);
 }
 
@@ -168,13 +175,15 @@ uint8_t *parse_hex_str(const t_command *cmd, t_context *ctx, const char *hex_str
     if (!hex)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
 
+    ft_memset(hex, 0x00, 8);
+
     int i = 0;
     for (int j = 0; j < hex_str_len; j += 2, i++)
     {
-        hex[i] = parse_hex_digit(cmd, ctx, hex_str[j]);
+        hex[i] = parse_hex_digit(cmd, ctx, hex_str[j], hex);
         hex[i] <<= 4;
         if ((j + 1) < hex_str_len)
-            hex[i] |= parse_hex_digit(cmd, ctx, hex_str[j + 1]);
+            hex[i] |= parse_hex_digit(cmd, ctx, hex_str[j + 1], hex);
     }
 
     return (hex);
@@ -184,16 +193,23 @@ char *ask_password(const t_command *cmd, t_context *ctx)
 {
     char *password = malloc(PASSWORD_MAX_LEN + 2);
     if (!password)
-        ;
+        ; // TODO
 
-    if (!readpassphrase("enter DES-ECB encryption password: ", password, PASSWORD_MAX_LEN + 2, RPP_REQUIRE_TTY))
+    char *cmd_name = ft_strmap(cmd->name, ft_toupper);
+    ft_printf("enter %s encryption password: ", cmd_name);
+
+    if (!readpassphrase("", password, PASSWORD_MAX_LEN + 2, RPP_REQUIRE_TTY))
     {
         free(password);
+        free(cmd_name);
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
     }
 
     char password_verify[PASSWORD_MAX_LEN + 2];
-    if (!readpassphrase("Verifying - enter DES-ECB encryption password: ", password_verify, PASSWORD_MAX_LEN + 2, RPP_REQUIRE_TTY))
+    ft_printf("Verifying - enter %s encryption password: ", cmd_name);
+    free(cmd_name);
+
+    if (!readpassphrase("", password_verify, PASSWORD_MAX_LEN + 2, RPP_REQUIRE_TTY))
     {
         free(password);
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
@@ -321,7 +337,12 @@ t_context *parse_des(const t_command *cmd, int argc, char **argv)
         fatal_error(ctx, cmd->name, NULL, "Option -v needs a value", clear_des_ctx);
 
     ctx->des.in = get_fd(ctx, in_file, ctx->des.in, false);
+    if (ctx->des.in == -1)
+        fatal_error(ctx, in_file, strerror(errno), NULL, clear_des_ctx);
+
     ctx->des.out = get_fd(ctx, out_file, ctx->des.out, true);
+    if (ctx->des.out == -1)
+            fatal_error(ctx, out_file, strerror(errno), NULL, clear_des_ctx);
 
     return (ctx);
 }
@@ -341,7 +362,7 @@ static uint64_t permute(uint64_t block, size_t block_size, const size_t *p_arr, 
     return (permutation);
 }
 
-static uint64_t *key_scheduler(uint64_t key)
+uint64_t *key_scheduler(uint64_t key)
 {
     uint64_t *subkeys = malloc(16 * sizeof(uint64_t));
     if (!subkeys)
@@ -394,20 +415,17 @@ static uint32_t feistel(uint32_t half_block, uint64_t subkey)
     return (permutation);
 }
 
-uint64_t des(uint64_t input, uint64_t key)
+uint64_t des(uint64_t input, uint64_t *subkeys, bool decrypt_mode)
 {
     uint64_t ip = permute(input, 64, g_ip, 64);
 
     uint32_t left_half = (ip >> 32) & 0xFFFFFFFF;
     uint32_t right_half = ip & 0xFFFFFFFF;
-
-    uint64_t *subkeys = key_scheduler(key);
-    if (!subkeys)
-        return 1; // TODO
     
     for (int i = 0; i < 16; i++)
     {
-        uint32_t next_right_half = feistel(right_half, subkeys[i]) ^ left_half;
+        size_t subkey_index = decrypt_mode ? 15 - i : i;
+        uint32_t next_right_half = feistel(right_half, subkeys[subkey_index]) ^ left_half;
 
         left_half = right_half;
         right_half = next_right_half;
@@ -417,8 +435,6 @@ uint64_t des(uint64_t input, uint64_t key)
         
     uint64_t fp = permute(combined, 64, g_fp, 64);
     free(subkeys);
-
-    printf("%lX\n", fp);
 
     return (fp);
 }
