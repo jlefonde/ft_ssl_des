@@ -49,6 +49,8 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
     ssize_t total_bytes_read = 0;
     uint8_t buffer_in[BUFFER_SIZE];
     uint8_t buffer_out[BUFFER_SIZE];
+    ft_memset(buffer_in, 0, BUFFER_SIZE);
+    ft_memset(buffer_out, 0, BUFFER_SIZE);
     size_t out_pos = 0;
     
     uint8_t block[8];
@@ -61,16 +63,9 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
 
         for (int i = 0; i < bytes_read; i += 8)
         {
-
-            if (ctx->des.decrypt_mode)
-            {
-
-            }
-            else
-            {
-                ft_memcpy(block, buffer_in + i, 8);
+            ft_memcpy(block, buffer_in + i, 8);
+            if (!ctx->des.decrypt_mode)
                 pkcs7(block, bytes_read - i);
-            }
 
             uint64_t cipher = des(bytes_to_uint64(block), subkeys, ctx->des.decrypt_mode);
             // printf("%lX", cipher);
@@ -89,11 +84,25 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
         // printf("%lX", cipher);
         append_cipher_to_output(cipher, buffer_out, &out_pos);
     }
+    
+    free(subkeys);
+    if (ctx->des.decrypt_mode)
+    {
+        uint8_t last_byte = buffer_out[out_pos - 1];
+        if (last_byte < 1 && last_byte > 8)
+            fatal_error(ctx, cmd->name, "Corrupted data", NULL, clear_des_ctx);
+
+        for (int i = out_pos - last_byte; i < out_pos; i++)
+        {
+            if (buffer_out[i] != last_byte)
+                fatal_error(ctx, cmd->name, "Corrupted data", NULL, clear_des_ctx);
+        }
+        out_pos -= last_byte;
+    }
 
     if (out_pos > 0)
         write_output(ctx->des.out, buffer_out, &out_pos);
 
-    free(subkeys);
     if (bytes_read == -1)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_base64_ctx);
 
