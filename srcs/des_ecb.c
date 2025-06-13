@@ -1,5 +1,20 @@
 #include "ssl.h"
 
+void append_cipher_to_output(uint64_t cipher, uint8_t *buffer, size_t *buffer_pos)
+{
+    for (int i = 0; i < 8; i++)
+        buffer[(*buffer_pos)++] = (cipher >> (56 - (i * 8))) & 0xFF;
+}
+
+void pkcs7(uint8_t *block, ssize_t remaining_bytes)
+{
+    if (remaining_bytes < 8)
+    {
+        int npad = 8 - remaining_bytes;
+        ft_memset(block + remaining_bytes, npad, npad);
+    }
+}
+
 // openssl enc -des-ecb -pbkdf2 -provider default -provider legacy -P
 // openssl enc -des-ecb -pbkdf2 -provider default -provider legacy -pass pass:test -S "ABC" -P
 void process_des_ecb(const t_command *cmd, int argc, char **argv)
@@ -35,7 +50,8 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
     uint8_t buffer_in[BUFFER_SIZE];
     uint8_t buffer_out[BUFFER_SIZE];
     size_t out_pos = 0;
-
+    
+    uint8_t block[8];
     while ((bytes_read = read_from_input(&ctx->des.in, buffer_in, BUFFER_SIZE)) > 0)
     {
         total_bytes_read += bytes_read;
@@ -45,35 +61,33 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
 
         for (int i = 0; i < bytes_read; i += 8)
         {
-            uint8_t block[8];
-            ft_memcpy(block, buffer_in + i, 8);
 
-            int remaining_bytes = bytes_read - i;
-            if (remaining_bytes < 8)
+            if (ctx->des.decrypt_mode)
             {
-                int npad = 8 - remaining_bytes;
-                ft_memset(block + remaining_bytes, npad, npad);
+
+            }
+            else
+            {
+                ft_memcpy(block, buffer_in + i, 8);
+                pkcs7(block, bytes_read - i);
             }
 
             uint64_t cipher = des(bytes_to_uint64(block), subkeys, ctx->des.decrypt_mode);
             // printf("%lX", cipher);
-            for (int j = 0; j < 8; j++)
-                buffer_out[out_pos++] = (cipher >> (56 - (j * 8))) & 0xFF;
+            append_cipher_to_output(cipher, buffer_out, &out_pos);
         }
 
         if (bytes_read < BUFFER_SIZE)
             break;
     }
 
-    if ((total_bytes_read % 8) == 0)
+    if (!ctx->des.decrypt_mode && ((total_bytes_read % 8) == 0))
     {
-        uint8_t block[8];
-        ft_memset(block, 0x08, 8);
+        pkcs7(block, 0);
 
         uint64_t cipher = des(bytes_to_uint64(block), subkeys, ctx->des.decrypt_mode);
         // printf("%lX", cipher);
-        for (int j = 0; j < 8; j++)
-            buffer_out[out_pos++] = (cipher >> (56 - (j * 8))) & 0xFF;
+        append_cipher_to_output(cipher, buffer_out, &out_pos);
     }
 
     if (out_pos > 0)
