@@ -89,7 +89,7 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
     if (ctx->des.decrypt_mode)
     {
         uint8_t last_byte = buffer_out[out_pos - 1];
-        if (last_byte < 1 && last_byte > 8)
+        if (last_byte < 1 || last_byte > 8)
             fatal_error(ctx, cmd->name, "Corrupted data", NULL, clear_des_ctx);
 
         for (int i = out_pos - last_byte; i < out_pos; i++)
