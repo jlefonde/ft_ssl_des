@@ -96,12 +96,13 @@ ssize_t read_from_input(t_input *input, void* buffer, size_t nbytes);
 int get_fd(t_context *ctx, const char *file, int default_fd, bool is_output);
 uint32_t rotate_left_28(uint32_t x, size_t n);
 uint8_t hex_to_value(char c);
+uint64_t bytes_to_uint64(const uint8_t *bytes) ;
 
 t_context *parse_digest(const t_command *cmd, int argc, char **argv);
 void process_digest(const t_command *cmd, t_context *ctx);
 
 t_context *parse_des(const t_command *cmd, int argc, char **argv);
-uint64_t des(uint64_t input, uint64_t *subkeys, bool decrypt_mode);
+uint64_t des(uint64_t block, uint64_t *subkeys, bool decrypt_mode);
 uint8_t *generate_random_bytes(const t_command *cmd, t_context *ctx, size_t nbytes);
 char *ask_password(const t_command *cmd, t_context *ctx);
 void des_print_mode(t_context *ctx, bool show_iv);

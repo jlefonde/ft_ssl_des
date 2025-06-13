@@ -106,3 +106,11 @@ uint8_t hex_to_value(char c)
     }
     return (-1);
 }
+
+uint64_t bytes_to_uint64(const uint8_t *bytes) 
+{
+    uint64_t value = 0;
+    for (int i = 0; i < 8; i++)
+        value |= ((uint64_t)bytes[i] << (56 - (i * 8)));
+    return (value);
+}

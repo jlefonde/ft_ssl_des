@@ -415,9 +415,9 @@ static uint32_t feistel(uint32_t half_block, uint64_t subkey)
     return (permutation);
 }
 
-uint64_t des(uint64_t input, uint64_t *subkeys, bool decrypt_mode)
+uint64_t des(uint64_t block, uint64_t *subkeys, bool decrypt_mode)
 {
-    uint64_t ip = permute(input, 64, g_ip, 64);
+    uint64_t ip = permute(block, 64, g_ip, 64);
 
     uint32_t left_half = (ip >> 32) & 0xFFFFFFFF;
     uint32_t right_half = ip & 0xFFFFFFFF;
@@ -434,7 +434,6 @@ uint64_t des(uint64_t input, uint64_t *subkeys, bool decrypt_mode)
     uint64_t combined = ((uint64_t)right_half << 32) | left_half;
         
     uint64_t fp = permute(combined, 64, g_fp, 64);
-    free(subkeys);
 
     return (fp);
 }

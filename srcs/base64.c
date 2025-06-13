@@ -118,6 +118,7 @@ static void encode_base64(const t_command *cmd, t_context *ctx)
     buffer.total_bytes_written = 0;
     buffer.out_pos = 0;
 
+    // TODO: use read_from_input otherwise stdin not working as intended
     while ((buffer.bytes_read = read(ctx->base64.in, buffer.in, BUFFER_SIZE)) > 0)
     {
         for (int i = 0; i < buffer.bytes_read; i += 3)
