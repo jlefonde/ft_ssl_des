@@ -5,7 +5,8 @@
 
 #define PASSWORD_MAX_LEN 128
 #define DES_SALT_LEN 8
-#define DES_DK_LEN 8
+#define DES_KEY_LEN 8
+#define DES_IV_LEN 8
 #define DES_PBKDF_ITR 1000
 
 typedef struct s_command t_command;

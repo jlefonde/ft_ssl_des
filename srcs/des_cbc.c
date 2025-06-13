@@ -15,7 +15,7 @@ void process_des_cbc(const t_command *cmd, int argc, char **argv)
 
     if (!ctx->des.key)
         ctx->des.key = pbkdf2(hmac_sha256, 32, ctx->des.password, ft_strlen(ctx->des.password),
-            ctx->des.salt, DES_SALT_LEN, DES_PBKDF_ITR, DES_DK_LEN);
+            ctx->des.salt, DES_SALT_LEN, DES_PBKDF_ITR, DES_KEY_LEN);
 
     if (ctx->des.print_mode)
         des_print_mode(ctx, true);
