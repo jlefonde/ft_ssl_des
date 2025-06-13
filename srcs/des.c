@@ -251,6 +251,7 @@ t_context *parse_des(const t_command *cmd, int argc, char **argv)
     ctx->des.decrypt_mode = false;
     ctx->des.base64_mode = false;
     ctx->des.print_mode = false;
+    ctx->des.prepend_salt = false;
 
     char *in_file = NULL;
     char *out_file = NULL;

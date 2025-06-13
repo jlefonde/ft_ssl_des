@@ -1,5 +1,12 @@
 #include "ssl.h"
 
+void prepend_salt_to_output(t_context *ctx)
+{
+    write(ctx->des.out, "Salted__", 8);
+    write(ctx->des.out, ctx->des.salt, 8);
+    ctx->des.prepend_salt = false;
+}
+
 void append_cipher_to_output(uint64_t cipher, uint8_t *buffer, size_t *buffer_pos)
 {
     for (int i = 0; i < 8; i++)
@@ -15,8 +22,6 @@ void pkcs7(uint8_t *block, ssize_t remaining_bytes)
     }
 }
 
-// openssl enc -des-ecb -pbkdf2 -provider default -provider legacy -P
-// openssl enc -des-ecb -pbkdf2 -provider default -provider legacy -pass pass:test -S "ABC" -P
 void process_des_ecb(const t_command *cmd, int argc, char **argv)
 {   
     t_context *ctx = parse_des(cmd, argc, argv);
@@ -24,11 +29,17 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
     if (ctx->des.iv)
         write(STDERR_FILENO, "warning: iv not used by this cipher\n", 36);
 
+    if (ctx->des.password && !ctx->des.key && !ctx->des.salt)
+        ctx->des.prepend_salt = true;
+
     if (!ctx->des.password && !ctx->des.key)
         ctx->des.password = ask_password(cmd, ctx);
 
-    if (!ctx->des.salt)
+    if (!ctx->des.salt && !ctx->des.key)
+    {
         ctx->des.salt = generate_random_bytes(cmd, ctx, 8);
+        ctx->des.prepend_salt = true;
+    }
 
     if (!ctx->des.key)
         ctx->des.key = pbkdf2(hmac_sha256, 32, ctx->des.password, ft_strlen(ctx->des.password),
@@ -36,6 +47,8 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
 
     if (ctx->des.print_mode)
     {
+        if (!ctx->des.salt)
+            ctx->des.salt = generate_random_bytes(cmd, ctx, DES_SALT_LEN);
         des_print_mode(ctx, false);
         return;
     }
@@ -49,14 +62,15 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
     ssize_t total_bytes_read = 0;
     uint8_t buffer_in[BUFFER_SIZE];
     uint8_t buffer_out[BUFFER_SIZE];
-    ft_memset(buffer_in, 0, BUFFER_SIZE);
-    ft_memset(buffer_out, 0, BUFFER_SIZE);
     size_t out_pos = 0;
     
     uint8_t block[8];
     while ((bytes_read = read_from_input(&ctx->des.in, buffer_in, BUFFER_SIZE)) > 0)
     {
         total_bytes_read += bytes_read;
+
+        if (ctx->des.prepend_salt)
+            prepend_salt_to_output(ctx);
 
         if ((out_pos + 8) >= BUFFER_SIZE)
             write_output(ctx->des.out, buffer_out, &out_pos);
@@ -69,7 +83,7 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
 
             uint64_t cipher = des(bytes_to_uint64(block), subkeys, ctx->des.decrypt_mode);
             // printf("%lX", cipher);
-            append_cipher_to_output(cipher, buffer_out, &out_pos);
+            append_des_cipher_to_output(cipher, buffer_out, &out_pos);
         }
 
         if (bytes_read < BUFFER_SIZE)
@@ -78,11 +92,14 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
 
     if (!ctx->des.decrypt_mode && ((total_bytes_read % 8) == 0))
     {
+        if (ctx->des.prepend_salt)
+            prepend_salt_to_output(ctx);
+
         pkcs7(block, 0);
 
         uint64_t cipher = des(bytes_to_uint64(block), subkeys, ctx->des.decrypt_mode);
         // printf("%lX", cipher);
-        append_cipher_to_output(cipher, buffer_out, &out_pos);
+        append_des_cipher_to_output(cipher, buffer_out, &out_pos);
     }
     
     free(subkeys);

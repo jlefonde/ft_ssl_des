@@ -74,6 +74,7 @@ typedef union u_context
         bool    base64_mode;
         bool    decrypt_mode;
         bool    print_mode;
+        bool    prepend_salt;
     }   des;
 }	t_context;
 
