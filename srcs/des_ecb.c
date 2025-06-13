@@ -40,7 +40,7 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
     {
         total_bytes_read += bytes_read;
 
-        if (out_pos == (BUFFER_SIZE - 8))
+        if ((out_pos + 8) >= BUFFER_SIZE)
             write_output(ctx->des.out, buffer_out, &out_pos);
 
         for (int i = 0; i < bytes_read; i += 8)
@@ -56,24 +56,24 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
             }
 
             uint64_t cipher = des(bytes_to_uint64(block), subkeys, ctx->des.decrypt_mode);
+            // printf("%lX", cipher);
             for (int j = 0; j < 8; j++)
                 buffer_out[out_pos++] = (cipher >> (56 - (j * 8))) & 0xFF;
         }
 
         if (bytes_read < BUFFER_SIZE)
-        {
-            if ((total_bytes_read % 8) == 0)
-            {
-                uint8_t block[8];
-                ft_memset(block, 0x08, 8);
-
-                uint64_t cipher = des(bytes_to_uint64(block), subkeys, ctx->des.decrypt_mode);
-                for (int j = 0; j < 8; j++)
-                    buffer_out[out_pos++] = (cipher >> (56 - (j * 8))) & 0xFF;
-            }
-
             break;
-        }
+    }
+
+    if ((total_bytes_read % 8) == 0)
+    {
+        uint8_t block[8];
+        ft_memset(block, 0x08, 8);
+
+        uint64_t cipher = des(bytes_to_uint64(block), subkeys, ctx->des.decrypt_mode);
+        // printf("%lX", cipher);
+        for (int j = 0; j < 8; j++)
+            buffer_out[out_pos++] = (cipher >> (56 - (j * 8))) & 0xFF;
     }
 
     if (out_pos > 0)

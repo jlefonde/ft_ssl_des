@@ -344,7 +344,7 @@ t_context *parse_des(const t_command *cmd, int argc, char **argv)
     if (ctx->des.out == -1)
             fatal_error(ctx, out_file, strerror(errno), NULL, clear_des_ctx);
 
-    ctx->des.in.type = (ctx->des.in.fd == STDIN_FILENO) ? INPUT_STDIN : INPUT_FILE;;
+    ctx->des.in.type = (ctx->des.in.fd == STDIN_FILENO) ? INPUT_STDIN : INPUT_FILE;
     ctx->des.in.data_pos = -1;
 
     return (ctx);
