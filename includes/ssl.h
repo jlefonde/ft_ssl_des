@@ -65,7 +65,7 @@ typedef union u_context
 
     struct
     {
-        int     in;
+        t_input in;
         int     out;
         char    *password;
         uint8_t *key;
@@ -96,7 +96,8 @@ ssize_t read_from_input(t_input *input, void* buffer, size_t nbytes);
 int get_fd(t_context *ctx, const char *file, int default_fd, bool is_output);
 uint32_t rotate_left_28(uint32_t x, size_t n);
 uint8_t hex_to_value(char c);
-uint64_t bytes_to_uint64(const uint8_t *bytes) ;
+uint64_t bytes_to_uint64(const uint8_t *bytes);
+void write_output(int out_fd, void *out_buffer, size_t *out_pos);
 
 t_context *parse_digest(const t_command *cmd, int argc, char **argv);
 void process_digest(const t_command *cmd, t_context *ctx);

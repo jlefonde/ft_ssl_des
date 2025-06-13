@@ -1,10 +1,10 @@
 #include "ssl.h"
 
 static const size_t g_ip[64] = {
-    58,	50,	42,	34,	26,	18,	10,	2, 60, 52, 44, 36, 28, 20, 12, 4,
-    62,	54,	46,	38,	30,	22,	14,	6, 64, 56, 48, 40, 32, 24, 16, 8,
-    57,	49,	41,	33,	25,	17,  9, 1, 59, 51, 43, 35, 27, 19, 11, 3,
-    61,	53,	45,	37,	29,	21,	13,	5, 63, 55, 47, 39, 31, 23, 15, 7
+    58, 50, 42, 34, 26, 18, 10, 2, 60, 52, 44, 36, 28, 20, 12, 4,
+    62, 54, 46, 38, 30, 22, 14, 6, 64, 56, 48, 40, 32, 24, 16, 8,
+    57, 49, 41, 33, 25, 17,  9, 1, 59, 51, 43, 35, 27, 19, 11, 3,
+    61, 53, 45, 37, 29, 21, 13, 5, 63, 55, 47, 39, 31, 23, 15, 7
 };
 
 static const size_t g_fp[64] = {
@@ -100,8 +100,8 @@ void clear_des_ctx(t_context *ctx)
     free(ctx->des.key);
     free(ctx->des.salt);
     free(ctx->des.iv);
-    if (ctx->des.in != STDIN_FILENO)
-        close(ctx->des.in);
+    if (ctx->des.in.fd != STDIN_FILENO)
+        close(ctx->des.in.fd);
     if (ctx->des.out != STDOUT_FILENO)
         close(ctx->des.out);
     free(ctx);
@@ -242,7 +242,7 @@ t_context *parse_des(const t_command *cmd, int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    ctx->des.in = STDIN_FILENO;
+    ctx->des.in.fd = STDIN_FILENO;
     ctx->des.out = STDOUT_FILENO;
     ctx->des.key = NULL;
     ctx->des.password = NULL;
@@ -336,13 +336,16 @@ t_context *parse_des(const t_command *cmd, int argc, char **argv)
     else if (iv_mode)
         fatal_error(ctx, cmd->name, NULL, "Option -v needs a value", clear_des_ctx);
 
-    ctx->des.in = get_fd(ctx, in_file, ctx->des.in, false);
-    if (ctx->des.in == -1)
+    ctx->des.in.fd = get_fd(ctx, in_file, ctx->des.in.fd, false);
+    if (ctx->des.in.fd == -1)
         fatal_error(ctx, in_file, strerror(errno), NULL, clear_des_ctx);
 
     ctx->des.out = get_fd(ctx, out_file, ctx->des.out, true);
     if (ctx->des.out == -1)
             fatal_error(ctx, out_file, strerror(errno), NULL, clear_des_ctx);
+
+    ctx->des.in.type = (ctx->des.in.fd == STDIN_FILENO) ? INPUT_STDIN : INPUT_FILE;;
+    ctx->des.in.data_pos = -1;
 
     return (ctx);
 }

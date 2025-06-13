@@ -114,3 +114,10 @@ uint64_t bytes_to_uint64(const uint8_t *bytes)
         value |= ((uint64_t)bytes[i] << (56 - (i * 8)));
     return (value);
 }
+
+void write_output(int out_fd, void *out_buffer, size_t *out_pos)
+{
+    write(out_fd, out_buffer, *out_pos);
+    ft_memset(out_buffer, 0x00, *out_pos);
+    *out_pos = 0;
+}

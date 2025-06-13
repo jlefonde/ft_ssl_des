@@ -103,13 +103,6 @@ static void append_output(t_buffer *buffer, char c)
         buffer->out[buffer->out_pos++] = '\n';
 }
 
-static void write_output(t_context *ctx, t_buffer *buffer)
-{
-    write(ctx->base64.out, buffer->out, buffer->out_pos);
-    ft_memset(buffer->out, 0x00, buffer->out_pos);
-    buffer->out_pos = 0;
-}
-
 static void encode_base64(const t_command *cmd, t_context *ctx)
 {
     t_buffer buffer;
@@ -124,7 +117,7 @@ static void encode_base64(const t_command *cmd, t_context *ctx)
         for (int i = 0; i < buffer.bytes_read; i += 3)
         {
             if (buffer.out_pos > BUFFER_SIZE - 53)
-                write_output(ctx, &buffer);
+                write_output(ctx->base64.out, buffer.out, &buffer.out_pos);
             int nbytes = buffer.bytes_read - i > 3 ? 3 : buffer.bytes_read - i;
             int pad = 3 - nbytes;
 
@@ -152,7 +145,7 @@ static void encode_base64(const t_command *cmd, t_context *ctx)
     }
 
     if (buffer.out_pos)
-        write_output(ctx, &buffer);
+        write_output(ctx->base64.out, buffer.out, &buffer.out_pos);
 
     if ((buffer.total_bytes_written % 64) != 0)
         write(ctx->base64.out, "\n", 1);
@@ -184,7 +177,7 @@ static void decode_base64(const t_command *cmd, t_context *ctx)
                 || (npad > 0 && buffer.in[i] != '=')
                 || (byte_count < 2 && buffer.in[i] == '='))
             {
-                write_output(ctx, &buffer);
+                write_output(ctx->base64.out, buffer.out, &buffer.out_pos);
                 fatal_error(ctx, cmd->name, "Invalid input", NULL, clear_base64_ctx); 
             }
             byte_count++;
@@ -199,7 +192,7 @@ static void decode_base64(const t_command *cmd, t_context *ctx)
                     buffer.out[buffer.out_pos++] = ((bytes[2] & 0b00000011) << 6) | (bytes[3] & 0b00111111);
 
                 if (buffer.out_pos > BUFFER_SIZE - 3)
-                    write_output(ctx, &buffer);
+                    write_output(ctx->base64.out, buffer.out, &buffer.out_pos);
 
                 byte_count = 0;
                 npad = 0;
@@ -208,7 +201,7 @@ static void decode_base64(const t_command *cmd, t_context *ctx)
     }
 
     if (buffer.out_pos)
-        write_output(ctx, &buffer);
+        write_output(ctx->base64.out, buffer.out, &buffer.out_pos);
     if (byte_count != 0 || (byte_count != 3 && npad != 0))
         fatal_error(ctx, cmd->name, "Invalid input", NULL, clear_base64_ctx); 
 
