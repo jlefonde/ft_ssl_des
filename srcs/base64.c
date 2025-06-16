@@ -216,7 +216,7 @@ static void decode_base64(const t_command *cmd, t_context *ctx)
 
 uint8_t *decode_base64_flag(const t_command *cmd, uint8_t *input, size_t n, size_t *decoded_size)
 {
-    uint8_t *out_buffer = malloc(BASE64_BUFFER_SIZE);
+    uint8_t *out_buffer = malloc(n);
     if (!out_buffer)
     {
         print_error(cmd->name, "base64", strerror(errno));

@@ -10,9 +10,10 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
         return;
     }
 
+    // TODO: add buffer to des ctx and free buffers on exit
     ssize_t bytes_read = 0;
     ssize_t total_bytes_read = 0;
-    uint8_t in_buffer[BASE64_BUFFER_SIZE];
+    uint8_t *in_buffer = malloc(BASE64_BUFFER_SIZE);
     uint8_t out_buffer[BASE64_BUFFER_SIZE];
     size_t out_pos = 0;
 
@@ -26,11 +27,8 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
             if (!decoded_buffer)
                 fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
 
-            printf("DECODED: ");
-            for (int i = 0; i < decoded_size; i++)
-                printf("%X ", decoded_buffer[i]);
-            printf("\n");
-            // in_buffer = decoded_buffer;
+            free(in_buffer);
+            in_buffer = decoded_buffer;
             bytes_read = decoded_size;
         }
 
