@@ -103,8 +103,8 @@ void clear_des_ctx(t_context *ctx)
     free(ctx->des.subkeys);
     if (ctx->des.in.fd != STDIN_FILENO)
         close(ctx->des.in.fd);
-    if (ctx->des.out != STDOUT_FILENO)
-        close(ctx->des.out);
+    if (ctx->des.out_fd != STDOUT_FILENO)
+        close(ctx->des.out_fd);
     free(ctx);
 }
 
@@ -363,8 +363,8 @@ int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required)
 
 void prepend_salt_to_output(t_context *ctx)
 {
-    write(ctx->des.out, "Salted__", 8);
-    write(ctx->des.out, ctx->des.salt, 8);
+    write(ctx->des.out_fd, "Salted__", 8);
+    write(ctx->des.out_fd, ctx->des.salt, 8);
     ctx->des.prepend_salt = false;
 }
 
@@ -383,7 +383,7 @@ void pkcs7(uint8_t *block, ssize_t remaining_bytes)
     }
 }
 
-void add_padding_block(t_context *ctx, uint8_t *buffer_out, size_t *out_pos)
+void add_padding_block(t_context *ctx, uint8_t *out_buffer, size_t *out_pos)
 {
     uint8_t block[8];
 
@@ -393,18 +393,18 @@ void add_padding_block(t_context *ctx, uint8_t *buffer_out, size_t *out_pos)
     pkcs7(block, 0);
 
     uint64_t cipher = des(bytes_to_uint64(block), ctx->des.subkeys, ctx->des.decrypt_mode);
-    append_cipher_to_output(cipher, buffer_out, out_pos);
+    append_cipher_to_output(cipher, out_buffer, out_pos);
 }
 
-void remove_padding(const t_command *cmd, t_context *ctx, uint8_t *buffer_out, size_t *out_pos)
+void remove_padding(const t_command *cmd, t_context *ctx, uint8_t *out_buffer, size_t *out_pos)
 {
-    uint8_t last_byte = buffer_out[*out_pos - 1];
+    uint8_t last_byte = out_buffer[*out_pos - 1];
     if (last_byte < 1 || last_byte > 8)
         fatal_error(ctx, cmd->name, "Corrupted data", NULL, clear_des_ctx);
 
     for (int i = *out_pos - last_byte; i < *out_pos; i++)
     {
-        if (buffer_out[i] != last_byte)
+        if (out_buffer[i] != last_byte)
             fatal_error(ctx, cmd->name, "Corrupted data", NULL, clear_des_ctx);
     }
 
@@ -421,7 +421,7 @@ t_context *parse_des(const t_command *cmd, int argc, char **argv)
     }
 
     ctx->des.in.fd = STDIN_FILENO;
-    ctx->des.out = STDOUT_FILENO;
+    ctx->des.out_fd = STDOUT_FILENO;
     ctx->des.key = NULL;
     ctx->des.password = NULL;
     ctx->des.salt = NULL;
@@ -519,8 +519,8 @@ t_context *parse_des(const t_command *cmd, int argc, char **argv)
     if (ctx->des.in.fd == -1)
         fatal_error(ctx, in_file, strerror(errno), NULL, clear_des_ctx);
 
-    ctx->des.out = get_fd(ctx, out_file, ctx->des.out, true);
-    if (ctx->des.out == -1)
+    ctx->des.out_fd = get_fd(ctx, out_file, ctx->des.out_fd, true);
+    if (ctx->des.out_fd == -1)
             fatal_error(ctx, out_file, strerror(errno), NULL, clear_des_ctx);
 
     ctx->des.in.type = (ctx->des.in.fd == STDIN_FILENO) ? INPUT_STDIN : INPUT_FILE;

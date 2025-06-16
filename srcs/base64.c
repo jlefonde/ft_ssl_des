@@ -11,8 +11,8 @@ void clear_base64_ctx(t_context *ctx)
 {
     if (ctx->base64.in != STDIN_FILENO)
         close(ctx->base64.in);
-    if (ctx->base64.out != STDOUT_FILENO)
-        close(ctx->base64.out);
+    if (ctx->base64.out_fd != STDOUT_FILENO)
+        close(ctx->base64.out_fd);
     free(ctx);
 }
 
@@ -41,7 +41,7 @@ static t_context *parse_base64(const t_command *cmd, int argc, char **argv)
     }
 
     ctx->base64.in = STDIN_FILENO;
-    ctx->base64.out = STDOUT_FILENO;
+    ctx->base64.out_fd = STDOUT_FILENO;
     ctx->base64.decode_mode = false;
 
     char *in_file = NULL;
@@ -88,111 +88,114 @@ static t_context *parse_base64(const t_command *cmd, int argc, char **argv)
     if (ctx->base64.in == -1)
             fatal_error(ctx, in_file, strerror(errno), NULL, clear_base64_ctx);
 
-    ctx->base64.out = get_fd(ctx, out_file, ctx->base64.out, true);
-    if (ctx->base64.out == -1)
+    ctx->base64.out_fd = get_fd(ctx, out_file, ctx->base64.out_fd, true);
+    if (ctx->base64.out_fd == -1)
             fatal_error(ctx, out_file, strerror(errno), NULL, clear_base64_ctx);
 
     return (ctx);
 }
 
-static void append_output(t_buffer *buffer, char c)
+static void append_output(uint8_t *out_buffer, size_t *out_pos, size_t *total_bytes_written, char c)
 {
-    buffer->out[buffer->out_pos++] = c;
-    buffer->total_bytes_written++;
-    if (buffer->total_bytes_written % 64 == 0)
-        buffer->out[buffer->out_pos++] = '\n';
+    out_buffer[(*out_pos)++] = c;
+    (*total_bytes_written)++;
+    if (*total_bytes_written % 64 == 0)
+        out_buffer[(*out_pos)++] = '\n';
 }
 
 static void encode_base64(const t_command *cmd, t_context *ctx)
 {
-    t_buffer buffer;
-
-    buffer.bytes_read = 0;
-    buffer.total_bytes_written = 0;
-    buffer.out_pos = 0;
+    uint8_t in_buffer[BASE64_BUFFER_SIZE];
+    uint8_t out_buffer[BASE64_BUFFER_SIZE];
+    ssize_t bytes_read = 0;
+    size_t  total_bytes_written = 0;
+    size_t  out_pos = 0;
 
     // TODO: use read_from_input otherwise stdin not working as intended
-    while ((buffer.bytes_read = read(ctx->base64.in, buffer.in, BUFFER_SIZE)) > 0)
+    while ((bytes_read = read(ctx->base64.in, in_buffer, BASE64_BUFFER_SIZE)) > 0)
     {
-        for (int i = 0; i < buffer.bytes_read; i += 3)
+        for (int i = 0; i < bytes_read; i += 3)
         {
-            if (buffer.out_pos > BUFFER_SIZE - 53)
-                write_output(ctx->base64.out, buffer.out, &buffer.out_pos);
-            int nbytes = buffer.bytes_read - i > 3 ? 3 : buffer.bytes_read - i;
-            int pad = 3 - nbytes;
+            if (out_pos > BASE64_BUFFER_SIZE - 53)
+                write_output(ctx->base64.out_fd, out_buffer, &out_pos);
+
+            int nbytes = bytes_read - i > 3 ? 3 : bytes_read - i;
+            int npad = 3 - nbytes;
 
             ssize_t indices[4] = { -1, -1, -1, -1 };
 
-            indices[0] = buffer.in[i] >> 2;
-            indices[1] = ((buffer.in[i] & 0b00000011) << 4);
+            indices[0] = in_buffer[i] >> 2;
+            indices[1] = ((in_buffer[i] & 0b00000011) << 4);
             if (nbytes > 1)
             {
-                indices[1] |= (buffer.in[i + 1] >> 4);
-                indices[2] = ((buffer.in[i + 1] & 0b00001111) << 2);
+                indices[1] |= (in_buffer[i + 1] >> 4);
+                indices[2] = ((in_buffer[i + 1] & 0b00001111) << 2);
                 if (nbytes > 2)
                 {
-                    indices[2] |= ((buffer.in[i + 2] & 0b11000000) >> 6);
-                    indices[3] = buffer.in[i + 2] & 0b00111111;
+                    indices[2] |= ((in_buffer[i + 2] & 0b11000000) >> 6);
+                    indices[3] = in_buffer[i + 2] & 0b00111111;
                 }
             }
 
             for (int j = 0; j < 4; j++)
                 if (indices[j] >= 0)
-                    append_output(&buffer, g_base64_alphabet[indices[j]]);
-            for (int j = 0; j < pad; j++)
-                append_output(&buffer, '=');
+                    append_output(out_buffer, &out_pos, &total_bytes_written, g_base64_alphabet[indices[j]]);
+
+            for (int j = 0; j < npad; j++)
+                append_output(out_buffer, &out_pos, &total_bytes_written, '=');
         }
     }
 
-    if (buffer.out_pos)
-        write_output(ctx->base64.out, buffer.out, &buffer.out_pos);
+    if (out_pos)
+        write_output(ctx->base64.out_fd, out_buffer, &out_pos);
 
-    if ((buffer.total_bytes_written % 64) != 0)
-        write(ctx->base64.out, "\n", 1);
+    if ((total_bytes_written % 64) != 0)
+        write(ctx->base64.out_fd, "\n", 1);
 
-    if (buffer.bytes_read == -1)
+    if (bytes_read == -1)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_base64_ctx);
 }
 
 static void decode_base64(const t_command *cmd, t_context *ctx)
 {
-    t_buffer buffer;
-    
-    buffer.bytes_read = 0;
-    buffer.out_pos = 0;
+    uint8_t in_buffer[BASE64_BUFFER_SIZE];
+    uint8_t out_buffer[BASE64_BUFFER_SIZE];
+    ssize_t bytes_read = 0;
+    size_t  total_bytes_written = 0;
+    size_t  out_pos = 0;
 
     uint8_t bytes[4];
     size_t byte_count = 0;
     size_t npad = 0;
 
-    while ((buffer.bytes_read = read(ctx->base64.in, buffer.in, BUFFER_SIZE)) > 0)
+    while ((bytes_read = read(ctx->base64.in, in_buffer, BASE64_BUFFER_SIZE)) > 0)
     {
-        for (int i = 0; i < buffer.bytes_read; i++)
+        for (int i = 0; i < bytes_read; i++)
         {
-            if (ft_isspace(buffer.in[i]))
+            if (ft_isspace(in_buffer[i]))
                 continue;
 
-            bytes[byte_count] = get_base64_char_index(buffer.in[i], &npad);
+            bytes[byte_count] = get_base64_char_index(in_buffer[i], &npad);
             if (bytes[byte_count] >= 64
-                || (npad > 0 && buffer.in[i] != '=')
-                || (byte_count < 2 && buffer.in[i] == '='))
+                || (npad > 0 && in_buffer[i] != '=')
+                || (byte_count < 2 && in_buffer[i] == '='))
             {
-                write_output(ctx->base64.out, buffer.out, &buffer.out_pos);
+                write_output(ctx->base64.out_fd, out_buffer, &out_pos);
                 fatal_error(ctx, cmd->name, "Invalid input", NULL, clear_base64_ctx); 
             }
             byte_count++;
 
             if (byte_count == 2)
-                buffer.out[buffer.out_pos++] = ((bytes[0] & 0b00111111) << 2) | (bytes[1] >> 4);
+                out_buffer[out_pos++] = ((bytes[0] & 0b00111111) << 2) | (bytes[1] >> 4);
             else if (byte_count == 3 && npad == 0)
-                buffer.out[buffer.out_pos++] = ((bytes[1] & 0b00001111) << 4) | (bytes[2] >> 2);
+                out_buffer[out_pos++] = ((bytes[1] & 0b00001111) << 4) | (bytes[2] >> 2);
             else if (byte_count == 4)
             {
                 if (npad == 0)
-                    buffer.out[buffer.out_pos++] = ((bytes[2] & 0b00000011) << 6) | (bytes[3] & 0b00111111);
+                    out_buffer[out_pos++] = ((bytes[2] & 0b00000011) << 6) | (bytes[3] & 0b00111111);
 
-                if (buffer.out_pos > BUFFER_SIZE - 3)
-                    write_output(ctx->base64.out, buffer.out, &buffer.out_pos);
+                if (out_pos > BASE64_BUFFER_SIZE - 3)
+                    write_output(ctx->base64.out_fd, out_buffer, &out_pos);
 
                 byte_count = 0;
                 npad = 0;
@@ -200,12 +203,13 @@ static void decode_base64(const t_command *cmd, t_context *ctx)
         }
     }
 
-    if (buffer.out_pos)
-        write_output(ctx->base64.out, buffer.out, &buffer.out_pos);
+    if (out_pos)
+        write_output(ctx->base64.out_fd, out_buffer, &out_pos);
+
     if (byte_count != 0 || (byte_count != 3 && npad != 0))
         fatal_error(ctx, cmd->name, "Invalid input", NULL, clear_base64_ctx); 
 
-    if (buffer.bytes_read == -1)
+    if (bytes_read == -1)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_base64_ctx);
 }
 
@@ -217,5 +221,6 @@ void process_base64(const t_command *cmd, int argc, char **argv)
         decode_base64(cmd, ctx);
     else
         encode_base64(cmd, ctx);
+
     clear_base64_ctx(ctx);
 }

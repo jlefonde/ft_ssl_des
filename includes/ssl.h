@@ -60,14 +60,14 @@ typedef union u_context
     struct
     {
         int     in;
-        int     out;
+        int     out_fd;
         bool    decode_mode;
     }   base64;
 
     struct
     {
         t_input in;
-        int     out;
+        int     out_fd;
         char    *password;
         uint8_t *key;
         uint8_t *salt;
