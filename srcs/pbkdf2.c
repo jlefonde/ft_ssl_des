@@ -33,7 +33,7 @@ static uint8_t *F(void *(*prf)(uint8_t *key, size_t key_len, uint8_t *msg, size_
 
     ft_memcpy(res, u, h_len);
 
-    for (int j = 1; j < c; j++)
+    for (size_t j = 1; j < c; j++)
     {
         uint8_t *u_next = prf((uint8_t *)password, password_len, u, h_len);
         if (!u_next)
@@ -43,7 +43,7 @@ static uint8_t *F(void *(*prf)(uint8_t *key, size_t key_len, uint8_t *msg, size_
             return (NULL);
         }
 
-        for (int k = 0; k < h_len; k++)
+        for (size_t k = 0; k < h_len; k++)
             res[k] ^= u_next[k];
 
         free(u);
@@ -71,7 +71,7 @@ uint8_t *pbkdf2(
     uint8_t *dk = malloc(dk_len);
     if (!dk)
         return (NULL);
-    for (int i = 0; i < l; i++)
+    for (size_t i = 0; i < l; i++)
     {
         uint8_t *t = F(prf, h_len, password, password_len, salt, salt_len, c, i + 1);
 

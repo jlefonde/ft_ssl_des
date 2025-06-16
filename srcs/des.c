@@ -100,14 +100,15 @@ void clear_des_ctx(t_context *ctx)
     free(ctx->des.key);
     free(ctx->des.salt);
     free(ctx->des.iv);
+    free(ctx->des.subkeys);
     if (ctx->des.in.fd != STDIN_FILENO)
         close(ctx->des.in.fd);
-    if (ctx->des.out != STDOUT_FILENO)
-        close(ctx->des.out);
+    if (ctx->des.out_fd != STDOUT_FILENO)
+        close(ctx->des.out_fd);
     free(ctx);
 }
 
-void print_hex_str(uint8_t *hex, const char *label)
+static void print_hex_str(uint8_t *hex, const char *label)
 {
     ft_printf("%s=", label);
     for (int i = 0; i < 8; i++)
@@ -115,7 +116,7 @@ void print_hex_str(uint8_t *hex, const char *label)
     ft_printf("\n");
 }
 
-uint8_t *generate_random_bytes(const t_command *cmd, t_context *ctx, size_t nbytes)
+static uint8_t *generate_random_bytes(const t_command *cmd, t_context *ctx, size_t nbytes)
 {
     uint8_t * buffer = malloc(nbytes);
     if (!buffer)
@@ -139,7 +140,7 @@ uint8_t *generate_random_bytes(const t_command *cmd, t_context *ctx, size_t nbyt
     return (buffer);
 }
 
-void des_print_mode(t_context *ctx, bool show_iv)
+static void des_print_mode(t_context *ctx, bool show_iv)
 {
     print_hex_str(ctx->des.key, "key");
     print_hex_str(ctx->des.salt, "salt");
@@ -148,7 +149,7 @@ void des_print_mode(t_context *ctx, bool show_iv)
         print_hex_str(ctx->des.iv, "iv");
 }
 
-uint8_t parse_hex_digit(const t_command *cmd, t_context *ctx, char c, uint8_t *hex)
+static uint8_t parse_hex_digit(const t_command *cmd, t_context *ctx, char c, uint8_t *hex)
 {
     uint8_t hex_value = hex_to_value(c);
     if (hex_value > 15)
@@ -159,7 +160,7 @@ uint8_t parse_hex_digit(const t_command *cmd, t_context *ctx, char c, uint8_t *h
     return (hex_value);
 }
 
-uint8_t *parse_hex_str(const t_command *cmd, t_context *ctx, const char *hex_str)
+static uint8_t *parse_hex_str(const t_command *cmd, t_context *ctx, const char *hex_str)
 {
     size_t hex_str_len = ft_strlen(hex_str);
 
@@ -178,7 +179,7 @@ uint8_t *parse_hex_str(const t_command *cmd, t_context *ctx, const char *hex_str
     ft_memset(hex, 0x00, 8);
 
     int i = 0;
-    for (int j = 0; j < hex_str_len; j += 2, i++)
+    for (size_t j = 0; j < hex_str_len; j += 2, i++)
     {
         hex[i] = parse_hex_digit(cmd, ctx, hex_str[j], hex);
         hex[i] <<= 4;
@@ -189,14 +190,14 @@ uint8_t *parse_hex_str(const t_command *cmd, t_context *ctx, const char *hex_str
     return (hex);
 }
 
-char *ask_password(const t_command *cmd, t_context *ctx)
+static char *ask_password(const t_command *cmd, t_context *ctx, bool skip_verify)
 {
     char *password = malloc(PASSWORD_MAX_LEN + 2);
     if (!password)
-        ; // TODO
+        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
 
     char *cmd_name = ft_strmap(cmd->name, ft_toupper);
-    ft_printf("enter %s encryption password: ", cmd_name);
+    ft_printf("enter %s %scryption password: ", cmd_name, ctx->des.decrypt_mode ? "de" : "en");
 
     if (!readpassphrase("", password, PASSWORD_MAX_LEN + 2, RPP_REQUIRE_TTY))
     {
@@ -205,20 +206,23 @@ char *ask_password(const t_command *cmd, t_context *ctx)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
     }
 
-    char password_verify[PASSWORD_MAX_LEN + 2];
-    ft_printf("Verifying - enter %s encryption password: ", cmd_name);
-    free(cmd_name);
-
-    if (!readpassphrase("", password_verify, PASSWORD_MAX_LEN + 2, RPP_REQUIRE_TTY))
+    if (!skip_verify)
     {
-        free(password);
-        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
-    }
+        char password_verify[PASSWORD_MAX_LEN + 2];
+        ft_printf("Verifying - enter %s encryption password: ", cmd_name);
+        free(cmd_name);
 
-    if (ft_strcmp(password, password_verify) != 0)
-    {
-        free(password);
-        fatal_error(ctx, cmd->name, "Password mismatch", NULL, clear_des_ctx);
+        if (!readpassphrase("", password_verify, PASSWORD_MAX_LEN + 2, RPP_REQUIRE_TTY))
+        {
+            free(password);
+            fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
+        }
+
+        if (ft_strcmp(password, password_verify) != 0)
+        {
+            free(password);
+            fatal_error(ctx, cmd->name, "Password mismatch", NULL, clear_des_ctx);
+        }
     }
 
     size_t password_len = ft_strlen(password);
@@ -233,6 +237,180 @@ char *ask_password(const t_command *cmd, t_context *ctx)
     return (password);
 }
 
+static void assign_derived_key(const t_command *cmd, t_context *ctx, uint8_t **dest, uint8_t *dk, size_t n)
+{
+    *dest = malloc(n);
+    if (!*dest)
+    {
+        free(dk);
+        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
+    }
+
+    ft_memcpy(*dest, dk, n);
+}
+
+static uint8_t *read_salt(const t_command *cmd, t_context *ctx)
+{
+    uint8_t salted_header[16];
+
+    ssize_t bytes_read = read(ctx->des.in.fd, salted_header, 16);
+    if (bytes_read == -1)
+        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
+
+    if (ft_memcmp(salted_header, "Salted__", 8) != 0)
+        fatal_error(ctx, cmd->name, "Bad magic number", NULL, clear_des_ctx);
+
+    if (bytes_read < 16)
+        fatal_error(ctx, cmd->name, "Error reading input file", NULL, clear_des_ctx);
+
+    uint8_t *salt = malloc(8);
+    if (!salt)
+        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
+
+    return (ft_memcpy(salt, salted_header + 8, 8));
+}
+
+static uint64_t permute(uint64_t block, size_t block_size, const size_t *p_arr, size_t out_size)
+{
+    uint64_t permutation = 0;
+
+    for (size_t i = 0; i < out_size; i++)
+    {
+        size_t block_bit_pos = p_arr[i] - 1;
+
+        if ((block >> (block_size - 1 - block_bit_pos)) & 1)
+            permutation |= ((uint64_t)1 << (out_size - 1 - i));
+    }
+
+    return (permutation);
+}
+
+static uint64_t *key_scheduler(uint64_t key)
+{
+    uint64_t *subkeys = malloc(16 * sizeof(uint64_t));
+    if (!subkeys)
+        return (NULL);
+
+    uint64_t pc1 = permute(key, 64, g_pc1, 56);
+
+    uint32_t left_half = (pc1 >> 28) & 0xFFFFFFF;
+    uint32_t right_half = pc1 & 0xFFFFFFF;
+
+    for (int i = 0; i < 16; i++)
+    {
+        left_half = rotate_left_28(left_half, g_rot[i]);
+        right_half = rotate_left_28(right_half, g_rot[i]);
+
+        uint64_t combined = ((uint64_t)left_half << 28) | right_half;
+        subkeys[i] = permute(combined, 56, g_pc2, 48);
+    }
+
+    return (subkeys);
+}
+
+int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required)
+{
+    if (ctx->des.iv && !iv_required)
+        write(STDERR_FILENO, "warning: iv not used by this cipher\n", 36);
+
+    if (ctx->des.password && !ctx->des.key && !ctx->des.salt)
+        ctx->des.prepend_salt = true;
+
+    if (!ctx->des.password && !ctx->des.key)
+        ctx->des.password = ask_password(cmd, ctx, ctx->des.decrypt_mode);
+
+    if (!ctx->des.salt && !ctx->des.key)
+    {
+        if (!ctx->des.decrypt_mode)
+            ctx->des.salt = generate_random_bytes(cmd, ctx, 8);
+        ctx->des.prepend_salt = true;
+    }
+
+    if (ctx->des.decrypt_mode && ctx->des.prepend_salt)
+        ctx->des.salt = read_salt(cmd, ctx);
+
+    if (iv_required && !ctx->des.iv && !ctx->des.password && ctx->des.key)
+        fatal_error(ctx, cmd->name, "iv undefined", NULL, clear_des_ctx);
+
+    if (ctx->des.password && ctx->des.salt)
+    {
+        uint8_t *dk = pbkdf2(hmac_sha256, 32, ctx->des.password, ft_strlen(ctx->des.password),
+            ctx->des.salt, DES_SALT_LEN, DES_PBKDF_ITR, DES_KEY_LEN + DES_IV_LEN);
+
+        if (!ctx->des.key)
+            assign_derived_key(cmd, ctx, &ctx->des.key, dk, DES_KEY_LEN);
+
+        if (!ctx->des.iv && iv_required)
+            assign_derived_key(cmd, ctx, &ctx->des.iv, dk + DES_KEY_LEN, DES_IV_LEN);
+
+        free(dk);
+    }
+
+    if (ctx->des.print_mode)
+    {
+        if (!ctx->des.salt)
+            ctx->des.salt = generate_random_bytes(cmd, ctx, DES_SALT_LEN);
+        des_print_mode(ctx, iv_required);
+        return (0);
+    }
+
+    ctx->des.subkeys = key_scheduler(bytes_to_uint64(ctx->des.key));
+    if (!ctx->des.subkeys)
+        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
+
+    return (1);
+}
+
+void prepend_salt_to_output(t_context *ctx)
+{
+    write(ctx->des.out_fd, "Salted__", 8);
+    write(ctx->des.out_fd, ctx->des.salt, 8);
+    ctx->des.prepend_salt = false;
+}
+
+void append_cipher_to_output(uint64_t cipher, uint8_t *buffer, size_t *buffer_pos)
+{
+    for (int i = 0; i < 8; i++)
+        buffer[(*buffer_pos)++] = (cipher >> (56 - (i * 8))) & 0xFF;
+}
+
+void pkcs7(uint8_t *block, ssize_t remaining_bytes)
+{
+    if (remaining_bytes < 8)
+    {
+        int npad = 8 - remaining_bytes;
+        ft_memset(block + remaining_bytes, npad, npad);
+    }
+}
+
+void add_padding_block(t_context *ctx, uint8_t *out_buffer, size_t *out_pos)
+{
+    uint8_t block[8];
+
+    if (ctx->des.prepend_salt)
+        prepend_salt_to_output(ctx);
+
+    pkcs7(block, 0);
+
+    uint64_t cipher = des(bytes_to_uint64(block), ctx->des.subkeys, ctx->des.decrypt_mode);
+    append_cipher_to_output(cipher, out_buffer, out_pos);
+}
+
+void remove_padding(const t_command *cmd, t_context *ctx, uint8_t *out_buffer, size_t *out_pos)
+{
+    uint8_t last_byte = out_buffer[*out_pos - 1];
+    if (last_byte < 1 || last_byte > 8)
+        fatal_error(ctx, cmd->name, "Corrupted data", NULL, clear_des_ctx);
+
+    for (size_t i = *out_pos - last_byte; i < *out_pos; i++)
+    {
+        if (out_buffer[i] != last_byte)
+            fatal_error(ctx, cmd->name, "Corrupted data", NULL, clear_des_ctx);
+    }
+
+    *out_pos -= last_byte;
+}
+
 t_context *parse_des(const t_command *cmd, int argc, char **argv)
 {   
     t_context *ctx = (t_context *)malloc(sizeof(t_context));
@@ -243,7 +421,7 @@ t_context *parse_des(const t_command *cmd, int argc, char **argv)
     }
 
     ctx->des.in.fd = STDIN_FILENO;
-    ctx->des.out = STDOUT_FILENO;
+    ctx->des.out_fd = STDOUT_FILENO;
     ctx->des.key = NULL;
     ctx->des.password = NULL;
     ctx->des.salt = NULL;
@@ -337,56 +515,18 @@ t_context *parse_des(const t_command *cmd, int argc, char **argv)
     else if (iv_mode)
         fatal_error(ctx, cmd->name, NULL, "Option -v needs a value", clear_des_ctx);
 
-    ctx->des.in.fd = get_fd(ctx, in_file, ctx->des.in.fd, false);
+    ctx->des.in.fd = get_fd(in_file, ctx->des.in.fd, false);
     if (ctx->des.in.fd == -1)
         fatal_error(ctx, in_file, strerror(errno), NULL, clear_des_ctx);
 
-    ctx->des.out = get_fd(ctx, out_file, ctx->des.out, true);
-    if (ctx->des.out == -1)
+    ctx->des.out_fd = get_fd(out_file, ctx->des.out_fd, true);
+    if (ctx->des.out_fd == -1)
             fatal_error(ctx, out_file, strerror(errno), NULL, clear_des_ctx);
 
     ctx->des.in.type = (ctx->des.in.fd == STDIN_FILENO) ? INPUT_STDIN : INPUT_FILE;
     ctx->des.in.data_pos = -1;
 
     return (ctx);
-}
-
-static uint64_t permute(uint64_t block, size_t block_size, const size_t *p_arr, size_t out_size)
-{
-    uint64_t permutation = 0;
-
-    for (int i = 0; i < out_size; i++)
-    {
-        size_t block_bit_pos = p_arr[i] - 1;
-
-        if ((block >> (block_size - 1 - block_bit_pos)) & 1)
-            permutation |= ((uint64_t)1 << (out_size - 1 - i));
-    }
-
-    return (permutation);
-}
-
-uint64_t *key_scheduler(uint64_t key)
-{
-    uint64_t *subkeys = malloc(16 * sizeof(uint64_t));
-    if (!subkeys)
-        return (NULL);
-
-    uint64_t pc1 = permute(key, 64, g_pc1, 56);
-
-    uint32_t left_half = (pc1 >> 28) & 0xFFFFFFF;
-    uint32_t right_half = pc1 & 0xFFFFFFF;
-
-    for (int i = 0; i < 16; i++)
-    {
-        left_half = rotate_left_28(left_half, g_rot[i]);
-        right_half = rotate_left_28(right_half, g_rot[i]);
-
-        uint64_t combined = ((uint64_t)left_half << 28) | right_half;
-        subkeys[i] = permute(combined, 56, g_pc2, 48);
-    }
-
-    return (subkeys);
 }
 
 static uint32_t substitute(uint64_t key_mix)
@@ -397,7 +537,7 @@ static uint32_t substitute(uint64_t key_mix)
     {
         uint8_t s = (key_mix >> (48 - (i + 1) * 6)) & 0b00111111;
 
-        uint8_t row = ((s >> 4) & 0b00000010) | s & 1;
+        uint8_t row = ((s >> 4) & 0b00000010) | (s & 1);
         uint8_t col = (s >> 1) & 0b00001111;
 
         substitution |= g_sbox[i][row][col];

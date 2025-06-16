@@ -77,7 +77,7 @@ ssize_t read_from_input(t_input *input, void* buffer, size_t nbytes)
     return (read(input->fd, buffer, nbytes));
 }
 
-int get_fd(t_context *ctx, const char *file, int default_fd, bool is_output)
+int get_fd(const char *file, int default_fd, bool is_output)
 {
     int fd = default_fd;
     if (file)

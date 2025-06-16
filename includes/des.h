@@ -3,15 +3,26 @@
 
 # include "ssl.h"
 
-#define PASSWORD_MAX_LEN 128
-#define DES_SALT_LEN 8
-#define DES_KEY_LEN 8
-#define DES_IV_LEN 8
-#define DES_PBKDF_ITR 1000
+# define PASSWORD_MAX_LEN 128
+# define DES_SALT_LEN 8
+# define DES_KEY_LEN 8
+# define DES_IV_LEN 8
+# define DES_PBKDF_ITR 10000
 
 typedef struct s_command t_command;
+typedef union u_context t_context;
 
 void process_des_cbc(const t_command *cmd, int argc, char **argv);
 void process_des_ecb(const t_command *cmd, int argc, char **argv);
+
+int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required);
+void prepend_salt_to_output(t_context *ctx);
+void append_cipher_to_output(uint64_t cipher, uint8_t *buffer, size_t *buffer_pos);
+void pkcs7(uint8_t *block, ssize_t remaining_bytes);
+void add_padding_block(t_context *ctx, uint8_t *out_buffer, size_t *out_pos);
+void remove_padding(const t_command *cmd, t_context *ctx, uint8_t *out_buffer, size_t *out_pos);
+t_context *parse_des(const t_command *cmd, int argc, char **argv);
+uint64_t des(uint64_t block, uint64_t *subkeys, bool decrypt_mode);
+void clear_des_ctx(t_context *ctx);
 
 # endif

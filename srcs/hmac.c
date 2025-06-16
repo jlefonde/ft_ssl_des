@@ -33,7 +33,7 @@ static uint8_t *xor_key_with_pad(const t_hmac* hmac, uint8_t* key, uint8_t pad)
     uint8_t *res = malloc(hmac->block_size);
     if (!res)
         return (NULL);
-    for (int i = 0; i < hmac->block_size; i++)
+    for (size_t i = 0; i < hmac->block_size; i++)
         res[i] = key[i] ^ pad;
     return (res);
 }
