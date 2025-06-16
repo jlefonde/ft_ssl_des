@@ -59,7 +59,7 @@ typedef union u_context
 
     struct
     {
-        int     in;
+        t_input in;
         int     out_fd;
         bool    decode_mode;
     }   base64;

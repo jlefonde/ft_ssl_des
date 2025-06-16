@@ -9,8 +9,8 @@ static const char g_base64_alphabet[64] = {
 
 void clear_base64_ctx(t_context *ctx)
 {
-    if (ctx->base64.in != STDIN_FILENO)
-        close(ctx->base64.in);
+    if (ctx->base64.in.fd != STDIN_FILENO)
+        close(ctx->base64.in.fd);
     if (ctx->base64.out_fd != STDOUT_FILENO)
         close(ctx->base64.out_fd);
     free(ctx);
@@ -40,7 +40,7 @@ static t_context *parse_base64(const t_command *cmd, int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    ctx->base64.in = STDIN_FILENO;
+    ctx->base64.in.fd = STDIN_FILENO;
     ctx->base64.out_fd = STDOUT_FILENO;
     ctx->base64.decode_mode = false;
 
@@ -84,13 +84,16 @@ static t_context *parse_base64(const t_command *cmd, int argc, char **argv)
     else if (out_mode)
         fatal_error(ctx, cmd->name, NULL, "Option -o needs a value", clear_base64_ctx);
 
-    ctx->base64.in = get_fd(ctx, in_file, ctx->base64.in, false);
-    if (ctx->base64.in == -1)
+    ctx->base64.in.fd = get_fd(ctx, in_file, ctx->base64.in.fd, false);
+    if (ctx->base64.in.fd == -1)
             fatal_error(ctx, in_file, strerror(errno), NULL, clear_base64_ctx);
 
     ctx->base64.out_fd = get_fd(ctx, out_file, ctx->base64.out_fd, true);
     if (ctx->base64.out_fd == -1)
             fatal_error(ctx, out_file, strerror(errno), NULL, clear_base64_ctx);
+
+    ctx->base64.in.type = (ctx->base64.in.fd == STDIN_FILENO) ? INPUT_STDIN : INPUT_FILE;
+    ctx->base64.in.data_pos = -1;
 
     return (ctx);
 }
@@ -112,7 +115,7 @@ static void encode_base64(const t_command *cmd, t_context *ctx)
     size_t  out_pos = 0;
 
     // TODO: use read_from_input otherwise stdin not working as intended
-    while ((bytes_read = read(ctx->base64.in, in_buffer, BASE64_BUFFER_SIZE)) > 0)
+    while ((bytes_read = read_from_input(&ctx->des.in, in_buffer, BASE64_BUFFER_SIZE)) > 0)
     {
         for (int i = 0; i < bytes_read; i += 3)
         {
@@ -168,7 +171,7 @@ static void decode_base64(const t_command *cmd, t_context *ctx)
     size_t byte_count = 0;
     size_t npad = 0;
 
-    while ((bytes_read = read(ctx->base64.in, in_buffer, BASE64_BUFFER_SIZE)) > 0)
+    while ((bytes_read = read_from_input(&ctx->des.in, in_buffer, BASE64_BUFFER_SIZE)) > 0)
     {
         for (int i = 0; i < bytes_read; i++)
         {
