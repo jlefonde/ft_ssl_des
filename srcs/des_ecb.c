@@ -34,6 +34,27 @@ void assign_derived_key(const t_command *cmd, t_context *ctx, uint8_t **dest, ui
     ft_memcpy(*dest, dk, n);
 }
 
+uint8_t *read_salt(const t_command *cmd, t_context *ctx)
+{
+    uint8_t salted_header[16];
+
+    ssize_t bytes_read = read(ctx->des.in.fd, salted_header, 16);
+    if (bytes_read == -1)
+        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
+
+    if (ft_memcmp(salted_header, "Salted__", 8) != 0)
+        fatal_error(ctx, cmd->name, "Bad magic number", NULL, clear_des_ctx);
+
+    if (bytes_read < 16)
+        fatal_error(ctx, cmd->name, "Error reading input file", NULL, clear_des_ctx);
+
+    uint8_t *salt = malloc(8);
+    if (!salt)
+        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
+
+    return (ft_memcpy(salt, salted_header + 8, 8));
+}
+
 int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required)
 {
     if (ctx->des.iv && !iv_required)
@@ -47,9 +68,13 @@ int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required)
 
     if (!ctx->des.salt && !ctx->des.key)
     {
-        ctx->des.salt = generate_random_bytes(cmd, ctx, 8);
+        if (!ctx->des.decrypt_mode)
+            ctx->des.salt = generate_random_bytes(cmd, ctx, 8);
         ctx->des.prepend_salt = true;
     }
+
+    if (ctx->des.decrypt_mode && ctx->des.prepend_salt)
+        ctx->des.salt = read_salt(cmd, ctx);
 
     if (iv_required && !ctx->des.iv && !ctx->des.password && ctx->des.key)
         fatal_error(ctx, cmd->name, "iv undefined", NULL, clear_des_ctx);
@@ -76,10 +101,14 @@ int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required)
         return (0);
     }
 
+    ctx->des.subkeys = key_scheduler(bytes_to_uint64(ctx->des.key));
+    if (!ctx->des.subkeys)
+        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
+
     return (1);
 }
 
-void add_padding_block(t_context *ctx, uint64_t *subkeys, uint8_t *buffer_out, size_t *out_pos)
+void add_padding_block(t_context *ctx, uint8_t *buffer_out, size_t *out_pos)
 {
     uint8_t block[8];
 
@@ -88,7 +117,7 @@ void add_padding_block(t_context *ctx, uint64_t *subkeys, uint8_t *buffer_out, s
 
     pkcs7(block, 0);
 
-    uint64_t cipher = des(bytes_to_uint64(block), subkeys, ctx->des.decrypt_mode);
+    uint64_t cipher = des(bytes_to_uint64(block), ctx->des.subkeys, ctx->des.decrypt_mode);
     append_cipher_to_output(cipher, buffer_out, out_pos);
 }
 
@@ -117,18 +146,11 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
         return;
     }
 
-    // TODO: add subkeys to ctx and clear ctx func
-    uint64_t key = bytes_to_uint64(ctx->des.key);
-    uint64_t *subkeys = key_scheduler(key);
-    if (!subkeys)
-        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
-
     ssize_t bytes_read = 0;
     ssize_t total_bytes_read = 0;
     uint8_t buffer_in[BUFFER_SIZE];
     uint8_t buffer_out[BUFFER_SIZE];
     size_t out_pos = 0;
-    bool first_read = true;
 
     while ((bytes_read = read_from_input(&ctx->des.in, buffer_in, BUFFER_SIZE)) > 0)
     {
@@ -137,40 +159,10 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
         if (!ctx->des.decrypt_mode && ctx->des.prepend_salt)
             prepend_salt_to_output(ctx);
 
-        // TODO: move the logic outside while before key gen and just read 16 from input if prepend_salt
-        // Test with:
-        //  - echo "Hello World!" | ./ft_ssl des-ecb -o test.enc
-        //  - ./ft_ssl des-ecb -i test.enc -d
-        int i = 0;
-        if (ctx->des.decrypt_mode && first_read)
-        {
-            first_read = false;
-            if (ctx->des.prepend_salt)
-            {
-                uint8_t first_16_bytes[16];
-                ft_memcpy(first_16_bytes, buffer_in + i, 16);
-                
-                if (ft_memcmp(first_16_bytes, "Salted__", 8) == 0)
-                {
-                    if (bytes_read < 16)
-                        fatal_error(ctx, cmd->name, "Error reading input file", NULL, clear_des_ctx);
-
-                    ctx->des.salt = malloc(8);
-                    if (!ctx->des.salt)
-                        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
-
-                    ft_memcpy(ctx->des.salt, first_16_bytes + 8, 8);
-                    i = 16;
-                }
-                else
-                    fatal_error(ctx, cmd->name, "Bad magic number", NULL, clear_des_ctx);
-            }
-        }
-
         if ((out_pos + 8) >= BUFFER_SIZE)
             write_output(ctx->des.out, buffer_out, &out_pos);
 
-        for (; i < bytes_read; i += 8)
+        for (int i = 0; i < bytes_read; i += 8)
         {
             uint8_t block[8];
             ft_memcpy(block, buffer_in + i, 8);
@@ -178,7 +170,7 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
             if (!ctx->des.decrypt_mode)
                 pkcs7(block, bytes_read - i);
 
-            uint64_t cipher = des(bytes_to_uint64(block), subkeys, ctx->des.decrypt_mode);
+            uint64_t cipher = des(bytes_to_uint64(block), ctx->des.subkeys, ctx->des.decrypt_mode);
             append_cipher_to_output(cipher, buffer_out, &out_pos);
         }
 
@@ -187,9 +179,7 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
     }
 
     if (!ctx->des.decrypt_mode && ((total_bytes_read % 8) == 0))
-        add_padding_block(ctx, subkeys, buffer_out, &out_pos);
-
-    free(subkeys);
+        add_padding_block(ctx, buffer_out, &out_pos);
 
     if (ctx->des.decrypt_mode)
         remove_padding(cmd, ctx, buffer_out, &out_pos);

@@ -71,6 +71,7 @@ typedef union u_context
         uint8_t *key;
         uint8_t *salt;
         uint8_t *iv;
+        uint64_t *subkeys;
         bool    base64_mode;
         bool    decrypt_mode;
         bool    print_mode;

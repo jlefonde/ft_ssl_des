@@ -7,7 +7,7 @@
 #define DES_SALT_LEN 8
 #define DES_KEY_LEN 8
 #define DES_IV_LEN 8
-#define DES_PBKDF_ITR 1000
+#define DES_PBKDF_ITR 10000
 
 typedef struct s_command t_command;
 

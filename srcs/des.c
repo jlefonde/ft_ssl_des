@@ -100,6 +100,7 @@ void clear_des_ctx(t_context *ctx)
     free(ctx->des.key);
     free(ctx->des.salt);
     free(ctx->des.iv);
+    free(ctx->des.subkeys);
     if (ctx->des.in.fd != STDIN_FILENO)
         close(ctx->des.in.fd);
     if (ctx->des.out != STDOUT_FILENO)
@@ -196,7 +197,7 @@ char *ask_password(const t_command *cmd, t_context *ctx, bool skip_verify)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
 
     char *cmd_name = ft_strmap(cmd->name, ft_toupper);
-    ft_printf("enter %s encryption password: ", cmd_name);
+    ft_printf("enter %s %scryption password: ", cmd_name, ctx->des.decrypt_mode ? "de" : "en");
 
     if (!readpassphrase("", password, PASSWORD_MAX_LEN + 2, RPP_REQUIRE_TTY))
     {
