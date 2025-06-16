@@ -1,12 +1,12 @@
-@test "$CMD -d $FILE" {
+@test "$CMD -d $FILE $OPENSSL_FLAGS" {
     local valgrind_log=$(mktemp)
-    openssl $CMD -pbkdf2 -md sha256 -provider default -provider legacy -in $FILE -out ${FILE}_enc
-    run valgrind --log-file="$valgrind_log" ../ft_ssl $CMD -d -i ${FILE}_enc -o $FT_SSL_OUT
+    openssl $CMD -pbkdf2 -md sha256 -provider default -provider legacy -in $FILE -out ${FILE}_enc $OPENSSL_FLAGS
+    run valgrind --log-file="$valgrind_log" ../ft_ssl $CMD -d -i ${FILE}_enc -o $FT_SSL_OUT $FT_SSL_FLAGS
     grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
     [ "$?" -eq 0 ]
     grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
     [ "$?" -eq 0 ]
-    openssl $CMD -pbkdf2 -md sha256 -provider default -provider legacy -d -in ${FILE}_enc -out $OPENSSL_OUT
+    openssl $CMD -pbkdf2 -md sha256 -provider default -provider legacy -d -in ${FILE}_enc -out $OPENSSL_OUT $OPENSSL_FLAGS
     assert_files_equal $FT_SSL_OUT $OPENSSL_OUT
     if [ "$?" -eq 0 ]; then
         rm -f $FT_SSL_OUT $OPENSSL_OUT
