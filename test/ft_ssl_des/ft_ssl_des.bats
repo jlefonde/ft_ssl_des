@@ -26,7 +26,7 @@ teardown_file() {
     done
 }
 
-declare -g files=( "0B" "1B" "2B" "3B" "4B" "5B" "15B" "16B" "17B" "32B" "64B" "1KB" "4KB" "64KB" "1MB" "10MB" )
+declare -g files=( "0B" "1B" "2B" "3B" "4B" "32B" "64B" "1KB" "4KB" "64KB" "1MB" "10MB" )
 
 # bats file_tags=base64,encode
 
@@ -101,66 +101,6 @@ declare -g files=( "0B" "1B" "2B" "3B" "4B" "5B" "15B" "16B" "17B" "32B" "64B" "
     assert_files_equal out/ft_ssl_base64_4B_enc out/base64_4B_enc
     if [ "$?" == 0 ]; then
         rm -f out/ft_ssl_base64_4B_enc out/base64_4B_enc
-    fi
-    rm -f "$valgrind_log"
-}
-
-@test "base64 5B" {
-    local valgrind_log=$(mktemp)
-    run valgrind --log-file="$valgrind_log" ../ft_ssl base64 -i 5B -o out/ft_ssl_base64_5B_enc
-    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    [ "$?" -eq 0 ]
-    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    [ "$?" -eq 0 ]
-    base64 -w 64 5B > out/base64_5B_enc
-    assert_files_equal out/ft_ssl_base64_5B_enc out/base64_5B_enc
-    if [ "$?" == 0 ]; then
-        rm -f out/ft_ssl_base64_5B_enc out/base64_5B_enc
-    fi
-    rm -f "$valgrind_log"
-}
-
-@test "base64 15B" {
-    local valgrind_log=$(mktemp)
-    run valgrind --log-file="$valgrind_log" ../ft_ssl base64 -i 15B -o out/ft_ssl_base64_15B_enc
-    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    [ "$?" -eq 0 ]
-    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    [ "$?" -eq 0 ]
-    base64 -w 64 15B > out/base64_15B_enc
-    assert_files_equal out/ft_ssl_base64_15B_enc out/base64_15B_enc
-    if [ "$?" == 0 ]; then
-        rm -f out/ft_ssl_base64_15B_enc out/base64_15B_enc
-    fi
-    rm -f "$valgrind_log"
-}
-
-@test "base64 16B" {
-    local valgrind_log=$(mktemp)
-    run valgrind --log-file="$valgrind_log" ../ft_ssl base64 -i 16B -o out/ft_ssl_base64_16B_enc
-    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    [ "$?" -eq 0 ]
-    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    [ "$?" -eq 0 ]
-    base64 -w 64 16B > out/base64_16B_enc
-    assert_files_equal out/ft_ssl_base64_16B_enc out/base64_16B_enc
-    if [ "$?" == 0 ]; then
-        rm -f out/ft_ssl_base64_16B_enc out/base64_16B_enc
-    fi
-    rm -f "$valgrind_log"
-}
-
-@test "base64 17B" {
-    local valgrind_log=$(mktemp)
-    run valgrind --log-file="$valgrind_log" ../ft_ssl base64 -i 17B -o out/ft_ssl_base64_17B_enc
-    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    [ "$?" -eq 0 ]
-    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    [ "$?" -eq 0 ]
-    base64 -w 64 17B > out/base64_17B_enc
-    assert_files_equal out/ft_ssl_base64_17B_enc out/base64_17B_enc
-    if [ "$?" == 0 ]; then
-        rm -f out/ft_ssl_base64_17B_enc out/base64_17B_enc
     fi
     rm -f "$valgrind_log"
 }
@@ -352,70 +292,6 @@ declare -g files=( "0B" "1B" "2B" "3B" "4B" "5B" "15B" "16B" "17B" "32B" "64B" "
     rm -f "$valgrind_log" 4B_enc
 }
 
-@test "base64 -d 5B" {
-    local valgrind_log=$(mktemp)
-    base64 -w 64 5B > 5B_enc
-    run valgrind --log-file="$valgrind_log" ../ft_ssl base64 -d -i 5B_enc -o out/ft_ssl_base64_5B_dec
-    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    [ "$?" -eq 0 ]
-    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    [ "$?" -eq 0 ]
-    base64 -d 5B_enc > out/base64_5B_dec
-    assert_files_equal out/ft_ssl_base64_5B_dec out/base64_5B_dec
-    if [ "$?" -eq 0 ]; then
-        rm -f out/ft_ssl_base64_5B_dec out/base64_5B_dec
-    fi
-    rm -f "$valgrind_log" 5B_enc
-}
-
-@test "base64 -d 15B" {
-    local valgrind_log=$(mktemp)
-    base64 -w 64 15B > 15B_enc
-    run valgrind --log-file="$valgrind_log" ../ft_ssl base64 -d -i 15B_enc -o out/ft_ssl_base64_15B_dec
-    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    [ "$?" -eq 0 ]
-    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    [ "$?" -eq 0 ]
-    base64 -d 15B_enc > out/base64_15B_dec
-    assert_files_equal out/ft_ssl_base64_15B_dec out/base64_15B_dec
-    if [ "$?" -eq 0 ]; then
-        rm -f out/ft_ssl_base64_15B_dec out/base64_15B_dec
-    fi
-    rm -f "$valgrind_log" 15B_enc
-}
-
-@test "base64 -d 16B" {
-    local valgrind_log=$(mktemp)
-    base64 -w 64 16B > 16B_enc
-    run valgrind --log-file="$valgrind_log" ../ft_ssl base64 -d -i 16B_enc -o out/ft_ssl_base64_16B_dec
-    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    [ "$?" -eq 0 ]
-    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    [ "$?" -eq 0 ]
-    base64 -d 16B_enc > out/base64_16B_dec
-    assert_files_equal out/ft_ssl_base64_16B_dec out/base64_16B_dec
-    if [ "$?" -eq 0 ]; then
-        rm -f out/ft_ssl_base64_16B_dec out/base64_16B_dec
-    fi
-    rm -f "$valgrind_log" 16B_enc
-}
-
-@test "base64 -d 17B" {
-    local valgrind_log=$(mktemp)
-    base64 -w 64 17B > 17B_enc
-    run valgrind --log-file="$valgrind_log" ../ft_ssl base64 -d -i 17B_enc -o out/ft_ssl_base64_17B_dec
-    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
-    [ "$?" -eq 0 ]
-    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
-    [ "$?" -eq 0 ]
-    base64 -d 17B_enc > out/base64_17B_dec
-    assert_files_equal out/ft_ssl_base64_17B_dec out/base64_17B_dec
-    if [ "$?" -eq 0 ]; then
-        rm -f out/ft_ssl_base64_17B_dec out/base64_17B_dec
-    fi
-    rm -f "$valgrind_log" 17B_enc
-}
-
 @test "base64 -d 32B" {
     local valgrind_log=$(mktemp)
     base64 -w 64 32B > 32B_enc
@@ -528,6 +404,7 @@ declare -g files=( "0B" "1B" "2B" "3B" "4B" "5B" "15B" "16B" "17B" "32B" "64B" "
     rm -f "$valgrind_log" 10MB_enc
 }
 
+# bats file_tags=base64,decode,subject
 @test "echo -n \"=\" | base64 -d" {
     local valgrind_log=$(mktemp)
     run bash -c "echo -n '=' | valgrind --log-file='$valgrind_log' ../ft_ssl base64 -d 2>/dev/null"
@@ -703,3 +580,756 @@ declare -g files=( "0B" "1B" "2B" "3B" "4B" "5B" "15B" "16B" "17B" "32B" "64B" "
     assert_output $(echo -n "dG90bwo=" | base64 -d)
     rm -f "$valgrind_log"
 }
+
+# bats file_tags=des-ecb,encrypt
+
+@test "des-ecb 0B" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-ecb -i 0B -o out/ft_ssl_des-ecb_0B_enc
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -in 0B -out out/openssl_des-ecb_0B_enc
+    assert_files_equal out/ft_ssl_des-ecb_0B_enc out/openssl_des-ecb_0B_enc
+    if [ "$?" == 0 ]; then
+        rm -f out/ft_ssl_des-ecb_0B_enc out/openssl_des-ecb_0B_enc
+    fi
+    rm -f "$valgrind_log"
+}
+
+@test "des-ecb 1B" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-ecb -i 1B -o out/ft_ssl_des-ecb_1B_enc
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -in 1B -out out/openssl_des-ecb_1B_enc
+    assert_files_equal out/ft_ssl_des-ecb_1B_enc out/openssl_des-ecb_1B_enc
+    if [ "$?" == 0 ]; then
+        rm -f out/ft_ssl_des-ecb_1B_enc out/openssl_des-ecb_1B_enc
+    fi
+    rm -f "$valgrind_log"
+}
+
+@test "des-ecb 2B" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-ecb -i 2B -o out/ft_ssl_des-ecb_2B_enc
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -in 2B -out out/openssl_des-ecb_2B_enc
+    assert_files_equal out/ft_ssl_des-ecb_2B_enc out/openssl_des-ecb_2B_enc
+    if [ "$?" == 0 ]; then
+        rm -f out/ft_ssl_des-ecb_2B_enc out/openssl_des-ecb_2B_enc
+    fi
+    rm -f "$valgrind_log"
+}
+
+@test "des-ecb 3B" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-ecb -i 3B -o out/ft_ssl_des-ecb_3B_enc
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -in 3B -out out/openssl_des-ecb_3B_enc
+    assert_files_equal out/ft_ssl_des-ecb_3B_enc out/openssl_des-ecb_3B_enc
+    if [ "$?" == 0 ]; then
+        rm -f out/ft_ssl_des-ecb_3B_enc out/openssl_des-ecb_3B_enc
+    fi
+    rm -f "$valgrind_log"
+}
+
+@test "des-ecb 4B" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-ecb -i 4B -o out/ft_ssl_des-ecb_4B_enc
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -in 4B -out out/openssl_des-ecb_4B_enc
+    assert_files_equal out/ft_ssl_des-ecb_4B_enc out/openssl_des-ecb_4B_enc
+    if [ "$?" == 0 ]; then
+        rm -f out/ft_ssl_des-ecb_4B_enc out/openssl_des-ecb_4B_enc
+    fi
+    rm -f "$valgrind_log"
+}
+
+@test "des-ecb 32B" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-ecb -i 32B -o out/ft_ssl_des-ecb_32B_enc
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -in 32B -out out/openssl_des-ecb_32B_enc
+    assert_files_equal out/ft_ssl_des-ecb_32B_enc out/openssl_des-ecb_32B_enc
+    if [ "$?" == 0 ]; then
+        rm -f out/ft_ssl_des-ecb_32B_enc out/openssl_des-ecb_32B_enc
+    fi
+    rm -f "$valgrind_log"
+}
+
+@test "des-ecb 64B" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-ecb -i 64B -o out/ft_ssl_des-ecb_64B_enc
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -in 64B -out out/openssl_des-ecb_64B_enc
+    assert_files_equal out/ft_ssl_des-ecb_64B_enc out/openssl_des-ecb_64B_enc
+    if [ "$?" == 0 ]; then
+        rm -f out/ft_ssl_des-ecb_64B_enc out/openssl_des-ecb_64B_enc
+    fi
+    rm -f "$valgrind_log"
+}
+
+@test "des-ecb 1KB" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-ecb -i 1KB -o out/ft_ssl_des-ecb_1KB_enc
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -in 1KB -out out/openssl_des-ecb_1KB_enc
+    assert_files_equal out/ft_ssl_des-ecb_1KB_enc out/openssl_des-ecb_1KB_enc
+    if [ "$?" == 0 ]; then
+        rm -f out/ft_ssl_des-ecb_1KB_enc out/openssl_des-ecb_1KB_enc
+    fi
+    rm -f "$valgrind_log"
+}
+
+@test "des-ecb 4KB" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-ecb -i 4KB -o out/ft_ssl_des-ecb_4KB_enc
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -in 4KB -out out/openssl_des-ecb_4KB_enc
+    assert_files_equal out/ft_ssl_des-ecb_4KB_enc out/openssl_des-ecb_4KB_enc
+    if [ "$?" == 0 ]; then
+        rm -f out/ft_ssl_des-ecb_4KB_enc out/openssl_des-ecb_4KB_enc
+    fi
+    rm -f "$valgrind_log"
+}
+
+@test "des-ecb 64KB" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-ecb -i 64KB -o out/ft_ssl_des-ecb_64KB_enc
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -in 64KB -out out/openssl_des-ecb_64KB_enc
+    assert_files_equal out/ft_ssl_des-ecb_64KB_enc out/openssl_des-ecb_64KB_enc
+    if [ "$?" == 0 ]; then
+        rm -f out/ft_ssl_des-ecb_64KB_enc out/openssl_des-ecb_64KB_enc
+    fi
+    rm -f "$valgrind_log"
+}
+
+@test "des-ecb 1MB" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-ecb -i 1MB -o out/ft_ssl_des-ecb_1MB_enc
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -in 1MB -out out/openssl_des-ecb_1MB_enc
+    assert_files_equal out/ft_ssl_des-ecb_1MB_enc out/openssl_des-ecb_1MB_enc
+    if [ "$?" == 0 ]; then
+        rm -f out/ft_ssl_des-ecb_1MB_enc out/openssl_des-ecb_1MB_enc
+    fi
+    rm -f "$valgrind_log"
+}
+
+@test "des-ecb 10MB" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-ecb -i 10MB -o out/ft_ssl_des-ecb_10MB_enc
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -in 10MB -out out/openssl_des-ecb_10MB_enc
+    assert_files_equal out/ft_ssl_des-ecb_10MB_enc out/openssl_des-ecb_10MB_enc
+    if [ "$?" == 0 ]; then
+        rm -f out/ft_ssl_des-ecb_10MB_enc out/openssl_des-ecb_10MB_enc
+    fi
+    rm -f "$valgrind_log"
+}
+
+# bats file_tags=des-ecb,decrypt
+
+@test "des-ecb -d 0B" {
+    local valgrind_log=$(mktemp)
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -in 0B -out 0B_enc
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-ecb -d -i 0B_enc -o out/ft_ssl_des-ecb_0B_dec
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -d -in 0B_enc -out out/openssl_des-ecb_0B_dec
+    assert_files_equal out/ft_ssl_des-ecb_0B_dec out/openssl_des-ecb_0B_dec
+    if [ "$?" -eq 0 ]; then
+        rm -f out/ft_ssl_des-ecb_0B_dec out/openssl_des-ecb_0B_dec
+    fi
+    rm -f "$valgrind_log" 0B_enc
+}
+
+@test "des-ecb -d 1B" {
+    local valgrind_log=$(mktemp)
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -in 1B -out 1B_enc
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-ecb -d -i 1B_enc -o out/ft_ssl_des-ecb_1B_dec
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -d -in 1B_enc -out out/openssl_des-ecb_1B_dec
+    assert_files_equal out/ft_ssl_des-ecb_1B_dec out/openssl_des-ecb_1B_dec
+    if [ "$?" -eq 0 ]; then
+        rm -f out/ft_ssl_des-ecb_1B_dec out/openssl_des-ecb_1B_dec
+    fi
+    rm -f "$valgrind_log" 1B_enc
+}
+
+@test "des-ecb -d 2B" {
+    local valgrind_log=$(mktemp)
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -in 2B -out 2B_enc
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-ecb -d -i 2B_enc -o out/ft_ssl_des-ecb_2B_dec
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -d -in 2B_enc -out out/openssl_des-ecb_2B_dec
+    assert_files_equal out/ft_ssl_des-ecb_2B_dec out/openssl_des-ecb_2B_dec
+    if [ "$?" -eq 0 ]; then
+        rm -f out/ft_ssl_des-ecb_2B_dec out/openssl_des-ecb_2B_dec
+    fi
+    rm -f "$valgrind_log" 2B_enc
+}
+
+@test "des-ecb -d 3B" {
+    local valgrind_log=$(mktemp)
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -in 3B -out 3B_enc
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-ecb -d -i 3B_enc -o out/ft_ssl_des-ecb_3B_dec
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -d -in 3B_enc -out out/openssl_des-ecb_3B_dec
+    assert_files_equal out/ft_ssl_des-ecb_3B_dec out/openssl_des-ecb_3B_dec
+    if [ "$?" -eq 0 ]; then
+        rm -f out/ft_ssl_des-ecb_3B_dec out/openssl_des-ecb_3B_dec
+    fi
+    rm -f "$valgrind_log" 3B_enc
+}
+
+@test "des-ecb -d 4B" {
+    local valgrind_log=$(mktemp)
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -in 4B -out 4B_enc
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-ecb -d -i 4B_enc -o out/ft_ssl_des-ecb_4B_dec
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -d -in 4B_enc -out out/openssl_des-ecb_4B_dec
+    assert_files_equal out/ft_ssl_des-ecb_4B_dec out/openssl_des-ecb_4B_dec
+    if [ "$?" -eq 0 ]; then
+        rm -f out/ft_ssl_des-ecb_4B_dec out/openssl_des-ecb_4B_dec
+    fi
+    rm -f "$valgrind_log" 4B_enc
+}
+
+@test "des-ecb -d 32B" {
+    local valgrind_log=$(mktemp)
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -in 32B -out 32B_enc
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-ecb -d -i 32B_enc -o out/ft_ssl_des-ecb_32B_dec
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -d -in 32B_enc -out out/openssl_des-ecb_32B_dec
+    assert_files_equal out/ft_ssl_des-ecb_32B_dec out/openssl_des-ecb_32B_dec
+    if [ "$?" -eq 0 ]; then
+        rm -f out/ft_ssl_des-ecb_32B_dec out/openssl_des-ecb_32B_dec
+    fi
+    rm -f "$valgrind_log" 32B_enc
+}
+
+@test "des-ecb -d 64B" {
+    local valgrind_log=$(mktemp)
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -in 64B -out 64B_enc
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-ecb -d -i 64B_enc -o out/ft_ssl_des-ecb_64B_dec
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -d -in 64B_enc -out out/openssl_des-ecb_64B_dec
+    assert_files_equal out/ft_ssl_des-ecb_64B_dec out/openssl_des-ecb_64B_dec
+    if [ "$?" -eq 0 ]; then
+        rm -f out/ft_ssl_des-ecb_64B_dec out/openssl_des-ecb_64B_dec
+    fi
+    rm -f "$valgrind_log" 64B_enc
+}
+
+@test "des-ecb -d 1KB" {
+    local valgrind_log=$(mktemp)
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -in 1KB -out 1KB_enc
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-ecb -d -i 1KB_enc -o out/ft_ssl_des-ecb_1KB_dec
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -d -in 1KB_enc -out out/openssl_des-ecb_1KB_dec
+    assert_files_equal out/ft_ssl_des-ecb_1KB_dec out/openssl_des-ecb_1KB_dec
+    if [ "$?" -eq 0 ]; then
+        rm -f out/ft_ssl_des-ecb_1KB_dec out/openssl_des-ecb_1KB_dec
+    fi
+    rm -f "$valgrind_log" 1KB_enc
+}
+
+@test "des-ecb -d 4KB" {
+    local valgrind_log=$(mktemp)
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -in 4KB -out 4KB_enc
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-ecb -d -i 4KB_enc -o out/ft_ssl_des-ecb_4KB_dec
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -d -in 4KB_enc -out out/openssl_des-ecb_4KB_dec
+    assert_files_equal out/ft_ssl_des-ecb_4KB_dec out/openssl_des-ecb_4KB_dec
+    if [ "$?" -eq 0 ]; then
+        rm -f out/ft_ssl_des-ecb_4KB_dec out/openssl_des-ecb_4KB_dec
+    fi
+    rm -f "$valgrind_log" 4KB_enc
+}
+
+@test "des-ecb -d 64KB" {
+    local valgrind_log=$(mktemp)
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -in 64KB -out 64KB_enc
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-ecb -d -i 64KB_enc -o out/ft_ssl_des-ecb_64KB_dec
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -d -in 64KB_enc -out out/openssl_des-ecb_64KB_dec
+    assert_files_equal out/ft_ssl_des-ecb_64KB_dec out/openssl_des-ecb_64KB_dec
+    if [ "$?" -eq 0 ]; then
+        rm -f out/ft_ssl_des-ecb_64KB_dec out/openssl_des-ecb_64KB_dec
+    fi
+    rm -f "$valgrind_log" 64KB_enc
+}
+
+@test "des-ecb -d 1MB" {
+    local valgrind_log=$(mktemp)
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -in 1MB -out 1MB_enc
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-ecb -d -i 1MB_enc -o out/ft_ssl_des-ecb_1MB_dec
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -d -in 1MB_enc -out out/openssl_des-ecb_1MB_dec
+    assert_files_equal out/ft_ssl_des-ecb_1MB_dec out/openssl_des-ecb_1MB_dec
+    if [ "$?" -eq 0 ]; then
+        rm -f out/ft_ssl_des-ecb_1MB_dec out/openssl_des-ecb_1MB_dec
+    fi
+    rm -f "$valgrind_log" 1MB_enc
+}
+
+@test "des-ecb -d 10MB" {
+    local valgrind_log=$(mktemp)
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -in 10MB -out 10MB_enc
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-ecb -d -i 10MB_enc -o out/ft_ssl_des-ecb_10MB_dec
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-ecb -pbkdf2 -md sha256 -provider default -provider legacy -d -in 10MB_enc -out out/openssl_des-ecb_10MB_dec
+    assert_files_equal out/ft_ssl_des-ecb_10MB_dec out/openssl_des-ecb_10MB_dec
+    if [ "$?" -eq 0 ]; then
+        rm -f out/ft_ssl_des-ecb_10MB_dec out/openssl_des-ecb_10MB_dec
+    fi
+    rm -f "$valgrind_log" 10MB_enc
+}
+
+# bats file_tags=des-cbc,encrypt
+
+@test "des-cbc 0B" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-cbc -i 0B -o out/ft_ssl_des-cbc_0B_enc
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -in 0B -out out/openssl_des-cbc_0B_enc
+    assert_files_equal out/ft_ssl_des-cbc_0B_enc out/openssl_des-cbc_0B_enc
+    if [ "$?" == 0 ]; then
+        rm -f out/ft_ssl_des-cbc_0B_enc out/openssl_des-cbc_0B_enc
+    fi
+    rm -f "$valgrind_log"
+}
+
+@test "des-cbc 1B" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-cbc -i 1B -o out/ft_ssl_des-cbc_1B_enc
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -in 1B -out out/openssl_des-cbc_1B_enc
+    assert_files_equal out/ft_ssl_des-cbc_1B_enc out/openssl_des-cbc_1B_enc
+    if [ "$?" == 0 ]; then
+        rm -f out/ft_ssl_des-cbc_1B_enc out/openssl_des-cbc_1B_enc
+    fi
+    rm -f "$valgrind_log"
+}
+
+@test "des-cbc 2B" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-cbc -i 2B -o out/ft_ssl_des-cbc_2B_enc
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -in 2B -out out/openssl_des-cbc_2B_enc
+    assert_files_equal out/ft_ssl_des-cbc_2B_enc out/openssl_des-cbc_2B_enc
+    if [ "$?" == 0 ]; then
+        rm -f out/ft_ssl_des-cbc_2B_enc out/openssl_des-cbc_2B_enc
+    fi
+    rm -f "$valgrind_log"
+}
+
+@test "des-cbc 3B" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-cbc -i 3B -o out/ft_ssl_des-cbc_3B_enc
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -in 3B -out out/openssl_des-cbc_3B_enc
+    assert_files_equal out/ft_ssl_des-cbc_3B_enc out/openssl_des-cbc_3B_enc
+    if [ "$?" == 0 ]; then
+        rm -f out/ft_ssl_des-cbc_3B_enc out/openssl_des-cbc_3B_enc
+    fi
+    rm -f "$valgrind_log"
+}
+
+@test "des-cbc 4B" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-cbc -i 4B -o out/ft_ssl_des-cbc_4B_enc
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -in 4B -out out/openssl_des-cbc_4B_enc
+    assert_files_equal out/ft_ssl_des-cbc_4B_enc out/openssl_des-cbc_4B_enc
+    if [ "$?" == 0 ]; then
+        rm -f out/ft_ssl_des-cbc_4B_enc out/openssl_des-cbc_4B_enc
+    fi
+    rm -f "$valgrind_log"
+}
+
+@test "des-cbc 32B" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-cbc -i 32B -o out/ft_ssl_des-cbc_32B_enc
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -in 32B -out out/openssl_des-cbc_32B_enc
+    assert_files_equal out/ft_ssl_des-cbc_32B_enc out/openssl_des-cbc_32B_enc
+    if [ "$?" == 0 ]; then
+        rm -f out/ft_ssl_des-cbc_32B_enc out/openssl_des-cbc_32B_enc
+    fi
+    rm -f "$valgrind_log"
+}
+
+@test "des-cbc 64B" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-cbc -i 64B -o out/ft_ssl_des-cbc_64B_enc
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -in 64B -out out/openssl_des-cbc_64B_enc
+    assert_files_equal out/ft_ssl_des-cbc_64B_enc out/openssl_des-cbc_64B_enc
+    if [ "$?" == 0 ]; then
+        rm -f out/ft_ssl_des-cbc_64B_enc out/openssl_des-cbc_64B_enc
+    fi
+    rm -f "$valgrind_log"
+}
+
+@test "des-cbc 1KB" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-cbc -i 1KB -o out/ft_ssl_des-cbc_1KB_enc
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -in 1KB -out out/openssl_des-cbc_1KB_enc
+    assert_files_equal out/ft_ssl_des-cbc_1KB_enc out/openssl_des-cbc_1KB_enc
+    if [ "$?" == 0 ]; then
+        rm -f out/ft_ssl_des-cbc_1KB_enc out/openssl_des-cbc_1KB_enc
+    fi
+    rm -f "$valgrind_log"
+}
+
+@test "des-cbc 4KB" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-cbc -i 4KB -o out/ft_ssl_des-cbc_4KB_enc
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -in 4KB -out out/openssl_des-cbc_4KB_enc
+    assert_files_equal out/ft_ssl_des-cbc_4KB_enc out/openssl_des-cbc_4KB_enc
+    if [ "$?" == 0 ]; then
+        rm -f out/ft_ssl_des-cbc_4KB_enc out/openssl_des-cbc_4KB_enc
+    fi
+    rm -f "$valgrind_log"
+}
+
+@test "des-cbc 64KB" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-cbc -i 64KB -o out/ft_ssl_des-cbc_64KB_enc
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -in 64KB -out out/openssl_des-cbc_64KB_enc
+    assert_files_equal out/ft_ssl_des-cbc_64KB_enc out/openssl_des-cbc_64KB_enc
+    if [ "$?" == 0 ]; then
+        rm -f out/ft_ssl_des-cbc_64KB_enc out/openssl_des-cbc_64KB_enc
+    fi
+    rm -f "$valgrind_log"
+}
+
+@test "des-cbc 1MB" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-cbc -i 1MB -o out/ft_ssl_des-cbc_1MB_enc
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -in 1MB -out out/openssl_des-cbc_1MB_enc
+    assert_files_equal out/ft_ssl_des-cbc_1MB_enc out/openssl_des-cbc_1MB_enc
+    if [ "$?" == 0 ]; then
+        rm -f out/ft_ssl_des-cbc_1MB_enc out/openssl_des-cbc_1MB_enc
+    fi
+    rm -f "$valgrind_log"
+}
+
+@test "des-cbc 10MB" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-cbc -i 10MB -o out/ft_ssl_des-cbc_10MB_enc
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -in 10MB -out out/openssl_des-cbc_10MB_enc
+    assert_files_equal out/ft_ssl_des-cbc_10MB_enc out/openssl_des-cbc_10MB_enc
+    if [ "$?" == 0 ]; then
+        rm -f out/ft_ssl_des-cbc_10MB_enc out/openssl_des-cbc_10MB_enc
+    fi
+    rm -f "$valgrind_log"
+}
+
+# bats file_tags=des-cbc,decrypt
+
+@test "des-cbc -d 0B" {
+    local valgrind_log=$(mktemp)
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -in 0B -out 0B_enc
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-cbc -d -i 0B_enc -o out/ft_ssl_des-cbc_0B_dec
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -d -in 0B_enc -out out/openssl_des-cbc_0B_dec
+    assert_files_equal out/ft_ssl_des-cbc_0B_dec out/openssl_des-cbc_0B_dec
+    if [ "$?" -eq 0 ]; then
+        rm -f out/ft_ssl_des-cbc_0B_dec out/openssl_des-cbc_0B_dec
+    fi
+    rm -f "$valgrind_log" 0B_enc
+}
+
+@test "des-cbc -d 1B" {
+    local valgrind_log=$(mktemp)
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -in 1B -out 1B_enc
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-cbc -d -i 1B_enc -o out/ft_ssl_des-cbc_1B_dec
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -d -in 1B_enc -out out/openssl_des-cbc_1B_dec
+    assert_files_equal out/ft_ssl_des-cbc_1B_dec out/openssl_des-cbc_1B_dec
+    if [ "$?" -eq 0 ]; then
+        rm -f out/ft_ssl_des-cbc_1B_dec out/openssl_des-cbc_1B_dec
+    fi
+    rm -f "$valgrind_log" 1B_enc
+}
+
+@test "des-cbc -d 2B" {
+    local valgrind_log=$(mktemp)
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -in 2B -out 2B_enc
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-cbc -d -i 2B_enc -o out/ft_ssl_des-cbc_2B_dec
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -d -in 2B_enc -out out/openssl_des-cbc_2B_dec
+    assert_files_equal out/ft_ssl_des-cbc_2B_dec out/openssl_des-cbc_2B_dec
+    if [ "$?" -eq 0 ]; then
+        rm -f out/ft_ssl_des-cbc_2B_dec out/openssl_des-cbc_2B_dec
+    fi
+    rm -f "$valgrind_log" 2B_enc
+}
+
+@test "des-cbc -d 3B" {
+    local valgrind_log=$(mktemp)
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -in 3B -out 3B_enc
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-cbc -d -i 3B_enc -o out/ft_ssl_des-cbc_3B_dec
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -d -in 3B_enc -out out/openssl_des-cbc_3B_dec
+    assert_files_equal out/ft_ssl_des-cbc_3B_dec out/openssl_des-cbc_3B_dec
+    if [ "$?" -eq 0 ]; then
+        rm -f out/ft_ssl_des-cbc_3B_dec out/openssl_des-cbc_3B_dec
+    fi
+    rm -f "$valgrind_log" 3B_enc
+}
+
+@test "des-cbc -d 4B" {
+    local valgrind_log=$(mktemp)
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -in 4B -out 4B_enc
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-cbc -d -i 4B_enc -o out/ft_ssl_des-cbc_4B_dec
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -d -in 4B_enc -out out/openssl_des-cbc_4B_dec
+    assert_files_equal out/ft_ssl_des-cbc_4B_dec out/openssl_des-cbc_4B_dec
+    if [ "$?" -eq 0 ]; then
+        rm -f out/ft_ssl_des-cbc_4B_dec out/openssl_des-cbc_4B_dec
+    fi
+    rm -f "$valgrind_log" 4B_enc
+}
+
+@test "des-cbc -d 32B" {
+    local valgrind_log=$(mktemp)
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -in 32B -out 32B_enc
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-cbc -d -i 32B_enc -o out/ft_ssl_des-cbc_32B_dec
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -d -in 32B_enc -out out/openssl_des-cbc_32B_dec
+    assert_files_equal out/ft_ssl_des-cbc_32B_dec out/openssl_des-cbc_32B_dec
+    if [ "$?" -eq 0 ]; then
+        rm -f out/ft_ssl_des-cbc_32B_dec out/openssl_des-cbc_32B_dec
+    fi
+    rm -f "$valgrind_log" 32B_enc
+}
+
+@test "des-cbc -d 64B" {
+    local valgrind_log=$(mktemp)
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -in 64B -out 64B_enc
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-cbc -d -i 64B_enc -o out/ft_ssl_des-cbc_64B_dec
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -d -in 64B_enc -out out/openssl_des-cbc_64B_dec
+    assert_files_equal out/ft_ssl_des-cbc_64B_dec out/openssl_des-cbc_64B_dec
+    if [ "$?" -eq 0 ]; then
+        rm -f out/ft_ssl_des-cbc_64B_dec out/openssl_des-cbc_64B_dec
+    fi
+    rm -f "$valgrind_log" 64B_enc
+}
+
+@test "des-cbc -d 1KB" {
+    local valgrind_log=$(mktemp)
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -in 1KB -out 1KB_enc
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-cbc -d -i 1KB_enc -o out/ft_ssl_des-cbc_1KB_dec
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -d -in 1KB_enc -out out/openssl_des-cbc_1KB_dec
+    assert_files_equal out/ft_ssl_des-cbc_1KB_dec out/openssl_des-cbc_1KB_dec
+    if [ "$?" -eq 0 ]; then
+        rm -f out/ft_ssl_des-cbc_1KB_dec out/openssl_des-cbc_1KB_dec
+    fi
+    rm -f "$valgrind_log" 1KB_enc
+}
+
+@test "des-cbc -d 4KB" {
+    local valgrind_log=$(mktemp)
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -in 4KB -out 4KB_enc
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-cbc -d -i 4KB_enc -o out/ft_ssl_des-cbc_4KB_dec
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -d -in 4KB_enc -out out/openssl_des-cbc_4KB_dec
+    assert_files_equal out/ft_ssl_des-cbc_4KB_dec out/openssl_des-cbc_4KB_dec
+    if [ "$?" -eq 0 ]; then
+        rm -f out/ft_ssl_des-cbc_4KB_dec out/openssl_des-cbc_4KB_dec
+    fi
+    rm -f "$valgrind_log" 4KB_enc
+}
+
+@test "des-cbc -d 64KB" {
+    local valgrind_log=$(mktemp)
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -in 64KB -out 64KB_enc
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-cbc -d -i 64KB_enc -o out/ft_ssl_des-cbc_64KB_dec
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -d -in 64KB_enc -out out/openssl_des-cbc_64KB_dec
+    assert_files_equal out/ft_ssl_des-cbc_64KB_dec out/openssl_des-cbc_64KB_dec
+    if [ "$?" -eq 0 ]; then
+        rm -f out/ft_ssl_des-cbc_64KB_dec out/openssl_des-cbc_64KB_dec
+    fi
+    rm -f "$valgrind_log" 64KB_enc
+}
+
+@test "des-cbc -d 1MB" {
+    local valgrind_log=$(mktemp)
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -in 1MB -out 1MB_enc
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-cbc -d -i 1MB_enc -o out/ft_ssl_des-cbc_1MB_dec
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -d -in 1MB_enc -out out/openssl_des-cbc_1MB_dec
+    assert_files_equal out/ft_ssl_des-cbc_1MB_dec out/openssl_des-cbc_1MB_dec
+    if [ "$?" -eq 0 ]; then
+        rm -f out/ft_ssl_des-cbc_1MB_dec out/openssl_des-cbc_1MB_dec
+    fi
+    rm -f "$valgrind_log" 1MB_enc
+}
+
+@test "des-cbc -d 10MB" {
+    local valgrind_log=$(mktemp)
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -in 10MB -out 10MB_enc
+    run valgrind --log-file="$valgrind_log" ../ft_ssl des-cbc -d -i 10MB_enc -o out/ft_ssl_des-cbc_10MB_dec
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl des-cbc -pbkdf2 -md sha256 -provider default -provider legacy -d -in 10MB_enc -out out/openssl_des-cbc_10MB_dec
+    assert_files_equal out/ft_ssl_des-cbc_10MB_dec out/openssl_des-cbc_10MB_dec
+    if [ "$?" -eq 0 ]; then
+        rm -f out/ft_ssl_des-cbc_10MB_dec out/openssl_des-cbc_10MB_dec
+    fi
+    rm -f "$valgrind_log" 10MB_enc
+}
+

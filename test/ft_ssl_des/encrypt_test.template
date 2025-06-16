@@ -1,0 +1,14 @@
+@test "$CMD $FILE" {
+    local valgrind_log=$(mktemp)
+    run valgrind --log-file="$valgrind_log" ../ft_ssl $CMD -i $FILE -o $FT_SSL_OUT
+    grep -q "All heap blocks were freed -- no leaks are possible" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    grep -q "ERROR SUMMARY: 0 errors from 0 contexts" "$valgrind_log"
+    [ "$?" -eq 0 ]
+    openssl $CMD -pbkdf2 -md sha256 -provider default -provider legacy -in $FILE -out $OPENSSL_OUT
+    assert_files_equal $FT_SSL_OUT $OPENSSL_OUT
+    if [ "$?" == 0 ]; then
+        rm -f $FT_SSL_OUT $OPENSSL_OUT
+    fi
+    rm -f "$valgrind_log"
+}
