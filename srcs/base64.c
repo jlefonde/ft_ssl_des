@@ -84,11 +84,11 @@ static t_context *parse_base64(const t_command *cmd, int argc, char **argv)
     else if (out_mode)
         fatal_error(ctx, cmd->name, NULL, "Option -o needs a value", clear_base64_ctx);
 
-    ctx->base64.in.fd = get_fd(ctx, in_file, ctx->base64.in.fd, false);
+    ctx->base64.in.fd = get_fd(in_file, ctx->base64.in.fd, false);
     if (ctx->base64.in.fd == -1)
             fatal_error(ctx, in_file, strerror(errno), NULL, clear_base64_ctx);
 
-    ctx->base64.out_fd = get_fd(ctx, out_file, ctx->base64.out_fd, true);
+    ctx->base64.out_fd = get_fd(out_file, ctx->base64.out_fd, true);
     if (ctx->base64.out_fd == -1)
             fatal_error(ctx, out_file, strerror(errno), NULL, clear_base64_ctx);
 
@@ -164,7 +164,6 @@ static void decode_base64(const t_command *cmd, t_context *ctx)
     uint8_t in_buffer[BASE64_BUFFER_SIZE];
     uint8_t out_buffer[BASE64_BUFFER_SIZE];
     ssize_t bytes_read = 0;
-    size_t  total_bytes_written = 0;
     size_t  out_pos = 0;
 
     uint8_t bytes[4];

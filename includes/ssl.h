@@ -96,7 +96,7 @@ void free_input(void *content);
 void fatal_error(t_context *ctx, const char *s1, const char *s2, const char *s3, void (*free_ctx)(t_context *ctx));
 void print_error(const char *s1, const char *s2, const char *s3);
 void write_output(int out_fd, void *out_buffer, size_t *out_pos);
-int get_fd(t_context *ctx, const char *file, int default_fd, bool is_output);
+int get_fd(const char *file, int default_fd, bool is_output);
 uint8_t hex_to_value(char c);
 uint32_t rotate_left_28(uint32_t x, size_t n);
 uint64_t bytes_to_uint64(const uint8_t *bytes);

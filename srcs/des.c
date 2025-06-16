@@ -179,7 +179,7 @@ static uint8_t *parse_hex_str(const t_command *cmd, t_context *ctx, const char *
     ft_memset(hex, 0x00, 8);
 
     int i = 0;
-    for (int j = 0; j < hex_str_len; j += 2, i++)
+    for (size_t j = 0; j < hex_str_len; j += 2, i++)
     {
         hex[i] = parse_hex_digit(cmd, ctx, hex_str[j], hex);
         hex[i] <<= 4;
@@ -274,7 +274,7 @@ static uint64_t permute(uint64_t block, size_t block_size, const size_t *p_arr, 
 {
     uint64_t permutation = 0;
 
-    for (int i = 0; i < out_size; i++)
+    for (size_t i = 0; i < out_size; i++)
     {
         size_t block_bit_pos = p_arr[i] - 1;
 
@@ -402,7 +402,7 @@ void remove_padding(const t_command *cmd, t_context *ctx, uint8_t *out_buffer, s
     if (last_byte < 1 || last_byte > 8)
         fatal_error(ctx, cmd->name, "Corrupted data", NULL, clear_des_ctx);
 
-    for (int i = *out_pos - last_byte; i < *out_pos; i++)
+    for (size_t i = *out_pos - last_byte; i < *out_pos; i++)
     {
         if (out_buffer[i] != last_byte)
             fatal_error(ctx, cmd->name, "Corrupted data", NULL, clear_des_ctx);
@@ -515,11 +515,11 @@ t_context *parse_des(const t_command *cmd, int argc, char **argv)
     else if (iv_mode)
         fatal_error(ctx, cmd->name, NULL, "Option -v needs a value", clear_des_ctx);
 
-    ctx->des.in.fd = get_fd(ctx, in_file, ctx->des.in.fd, false);
+    ctx->des.in.fd = get_fd(in_file, ctx->des.in.fd, false);
     if (ctx->des.in.fd == -1)
         fatal_error(ctx, in_file, strerror(errno), NULL, clear_des_ctx);
 
-    ctx->des.out_fd = get_fd(ctx, out_file, ctx->des.out_fd, true);
+    ctx->des.out_fd = get_fd(out_file, ctx->des.out_fd, true);
     if (ctx->des.out_fd == -1)
             fatal_error(ctx, out_file, strerror(errno), NULL, clear_des_ctx);
 
@@ -537,7 +537,7 @@ static uint32_t substitute(uint64_t key_mix)
     {
         uint8_t s = (key_mix >> (48 - (i + 1) * 6)) & 0b00111111;
 
-        uint8_t row = ((s >> 4) & 0b00000010) | s & 1;
+        uint8_t row = ((s >> 4) & 0b00000010) | (s & 1);
         uint8_t col = (s >> 1) & 0b00001111;
 
         substitution |= g_sbox[i][row][col];
