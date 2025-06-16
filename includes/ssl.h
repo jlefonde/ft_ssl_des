@@ -106,10 +106,12 @@ void process_digest(const t_command *cmd, t_context *ctx);
 
 t_context *parse_des(const t_command *cmd, int argc, char **argv);
 uint64_t des(uint64_t block, uint64_t *subkeys, bool decrypt_mode);
-uint8_t *generate_random_bytes(const t_command *cmd, t_context *ctx, size_t nbytes);
-char *ask_password(const t_command *cmd, t_context *ctx, bool skip_verify);
-void des_print_mode(t_context *ctx, bool show_iv);
-uint64_t *key_scheduler(uint64_t key);
+void prepend_salt_to_output(t_context *ctx);
+void append_cipher_to_output(uint64_t cipher, uint8_t *buffer, size_t *buffer_pos);
+void pkcs7(uint8_t *block, ssize_t remaining_bytes);
+int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required);
+void add_padding_block(t_context *ctx, uint8_t *buffer_out, size_t *out_pos);
+void remove_padding(const t_command *cmd, t_context *ctx, uint8_t *buffer_out, size_t *out_pos);
 
 void clear_digest_ctx(t_context *ctx);
 void clear_base64_ctx(t_context *ctx);
