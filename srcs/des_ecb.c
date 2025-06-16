@@ -18,6 +18,22 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
 
     while ((bytes_read = read_from_input(&ctx->des.in, in_buffer, BASE64_BUFFER_SIZE)) > 0)
     {
+        if (ctx->des.decrypt_mode && ctx->des.base64_mode)
+        {
+            size_t decoded_size = 0;
+
+            uint8_t *decoded_buffer = decode_base64_flag(cmd, in_buffer, bytes_read, &decoded_size);
+            if (!decoded_buffer)
+                fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
+
+            printf("DECODED: ");
+            for (int i = 0; i < decoded_size; i++)
+                printf("%X ", decoded_buffer[i]);
+            printf("\n");
+            // in_buffer = decoded_buffer;
+            bytes_read = decoded_size;
+        }
+
         total_bytes_read += bytes_read;
 
         if (!ctx->des.decrypt_mode && ctx->des.prepend_salt)

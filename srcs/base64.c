@@ -114,8 +114,7 @@ static void encode_base64(const t_command *cmd, t_context *ctx)
     size_t  total_bytes_written = 0;
     size_t  out_pos = 0;
 
-    // TODO: use read_from_input otherwise stdin not working as intended
-    while ((bytes_read = read_from_input(&ctx->des.in, in_buffer, BASE64_BUFFER_SIZE)) > 0)
+    while ((bytes_read = read_from_input(&ctx->base64.in, in_buffer, BASE64_BUFFER_SIZE)) > 0)
     {
         for (int i = 0; i < bytes_read; i += 3)
         {
@@ -170,7 +169,7 @@ static void decode_base64(const t_command *cmd, t_context *ctx)
     size_t byte_count = 0;
     size_t npad = 0;
 
-    while ((bytes_read = read_from_input(&ctx->des.in, in_buffer, BASE64_BUFFER_SIZE)) > 0)
+    while ((bytes_read = read_from_input(&ctx->base64.in, in_buffer, BASE64_BUFFER_SIZE)) > 0)
     {
         for (int i = 0; i < bytes_read; i++)
         {
@@ -213,6 +212,60 @@ static void decode_base64(const t_command *cmd, t_context *ctx)
 
     if (bytes_read == -1)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_base64_ctx);
+}
+
+uint8_t *decode_base64_flag(const t_command *cmd, uint8_t *input, size_t n, size_t *decoded_size)
+{
+    uint8_t *out_buffer = malloc(BASE64_BUFFER_SIZE);
+    if (!out_buffer)
+    {
+        print_error(cmd->name, "base64", strerror(errno));
+        return (NULL);
+    }
+
+    size_t  out_pos = 0;
+    uint8_t bytes[4];
+    size_t byte_count = 0;
+    size_t npad = 0;
+
+    for (int i = 0; i < n; i++)
+    {
+        if (ft_isspace(input[i]))
+            continue;
+
+        bytes[byte_count] = get_base64_char_index(input[i], &npad);
+        if (bytes[byte_count] >= 64
+            || (npad > 0 && input[i] != '=')
+            || (byte_count < 2 && input[i] == '='))
+        {
+            print_error(cmd->name, "base64", "Invalid input");
+            return (NULL);
+        }
+
+        byte_count++;
+
+        if (byte_count == 2)
+            out_buffer[out_pos++] = ((bytes[0] & 0b00111111) << 2) | (bytes[1] >> 4);
+        else if (byte_count == 3 && npad == 0)
+            out_buffer[out_pos++] = ((bytes[1] & 0b00001111) << 4) | (bytes[2] >> 2);
+        else if (byte_count == 4)
+        {
+            if (npad == 0)
+                out_buffer[out_pos++] = ((bytes[2] & 0b00000011) << 6) | (bytes[3] & 0b00111111);
+
+            byte_count = 0;
+            npad = 0;
+        }
+    }
+
+    if (byte_count != 0 || (byte_count != 3 && npad != 0))
+    {
+        print_error(cmd->name, "base64", "Invalid input");
+        return (NULL);
+    }
+    
+    *decoded_size = out_pos;
+    return (out_buffer);
 }
 
 void process_base64(const t_command *cmd, int argc, char **argv)
