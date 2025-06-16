@@ -270,6 +270,44 @@ static uint8_t *read_salt(const t_command *cmd, t_context *ctx)
     return (ft_memcpy(salt, salted_header + 8, 8));
 }
 
+static uint64_t permute(uint64_t block, size_t block_size, const size_t *p_arr, size_t out_size)
+{
+    uint64_t permutation = 0;
+
+    for (int i = 0; i < out_size; i++)
+    {
+        size_t block_bit_pos = p_arr[i] - 1;
+
+        if ((block >> (block_size - 1 - block_bit_pos)) & 1)
+            permutation |= ((uint64_t)1 << (out_size - 1 - i));
+    }
+
+    return (permutation);
+}
+
+static uint64_t *key_scheduler(uint64_t key)
+{
+    uint64_t *subkeys = malloc(16 * sizeof(uint64_t));
+    if (!subkeys)
+        return (NULL);
+
+    uint64_t pc1 = permute(key, 64, g_pc1, 56);
+
+    uint32_t left_half = (pc1 >> 28) & 0xFFFFFFF;
+    uint32_t right_half = pc1 & 0xFFFFFFF;
+
+    for (int i = 0; i < 16; i++)
+    {
+        left_half = rotate_left_28(left_half, g_rot[i]);
+        right_half = rotate_left_28(right_half, g_rot[i]);
+
+        uint64_t combined = ((uint64_t)left_half << 28) | right_half;
+        subkeys[i] = permute(combined, 56, g_pc2, 48);
+    }
+
+    return (subkeys);
+}
+
 int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required)
 {
     if (ctx->des.iv && !iv_required)
@@ -489,44 +527,6 @@ t_context *parse_des(const t_command *cmd, int argc, char **argv)
     ctx->des.in.data_pos = -1;
 
     return (ctx);
-}
-
-static uint64_t permute(uint64_t block, size_t block_size, const size_t *p_arr, size_t out_size)
-{
-    uint64_t permutation = 0;
-
-    for (int i = 0; i < out_size; i++)
-    {
-        size_t block_bit_pos = p_arr[i] - 1;
-
-        if ((block >> (block_size - 1 - block_bit_pos)) & 1)
-            permutation |= ((uint64_t)1 << (out_size - 1 - i));
-    }
-
-    return (permutation);
-}
-
-static uint64_t *key_scheduler(uint64_t key)
-{
-    uint64_t *subkeys = malloc(16 * sizeof(uint64_t));
-    if (!subkeys)
-        return (NULL);
-
-    uint64_t pc1 = permute(key, 64, g_pc1, 56);
-
-    uint32_t left_half = (pc1 >> 28) & 0xFFFFFFF;
-    uint32_t right_half = pc1 & 0xFFFFFFF;
-
-    for (int i = 0; i < 16; i++)
-    {
-        left_half = rotate_left_28(left_half, g_rot[i]);
-        right_half = rotate_left_28(right_half, g_rot[i]);
-
-        uint64_t combined = ((uint64_t)left_half << 28) | right_half;
-        subkeys[i] = permute(combined, 56, g_pc2, 48);
-    }
-
-    return (subkeys);
 }
 
 static uint32_t substitute(uint64_t key_mix)

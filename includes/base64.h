@@ -15,7 +15,9 @@ typedef struct s_buffer
 }   t_buffer;
 
 typedef struct s_command t_command;
+typedef union u_context t_context;
 
 void process_base64(const t_command *cmd, int argc, char **argv);
+void clear_base64_ctx(t_context *ctx);
 
 # endif

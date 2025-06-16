@@ -9,9 +9,10 @@
 # include <unistd.h>
 # include <stdlib.h>
 # include <errno.h>
-#include <bsd/readpassphrase.h>
+# include <bsd/readpassphrase.h>
 
 # include "../libft/includes/libft.h"
+# include "digest.h"
 # include "md5.h"
 # include "sha256.h"
 # include "blake2s.h"
@@ -94,27 +95,11 @@ typedef struct s_command
 void free_input(void *content);
 void fatal_error(t_context *ctx, const char *s1, const char *s2, const char *s3, void (*free_ctx)(t_context *ctx));
 void print_error(const char *s1, const char *s2, const char *s3);
-ssize_t read_from_input(t_input *input, void* buffer, size_t nbytes);
-int get_fd(t_context *ctx, const char *file, int default_fd, bool is_output);
-uint32_t rotate_left_28(uint32_t x, size_t n);
-uint8_t hex_to_value(char c);
-uint64_t bytes_to_uint64(const uint8_t *bytes);
 void write_output(int out_fd, void *out_buffer, size_t *out_pos);
-
-t_context *parse_digest(const t_command *cmd, int argc, char **argv);
-void process_digest(const t_command *cmd, t_context *ctx);
-
-t_context *parse_des(const t_command *cmd, int argc, char **argv);
-uint64_t des(uint64_t block, uint64_t *subkeys, bool decrypt_mode);
-void prepend_salt_to_output(t_context *ctx);
-void append_cipher_to_output(uint64_t cipher, uint8_t *buffer, size_t *buffer_pos);
-void pkcs7(uint8_t *block, ssize_t remaining_bytes);
-int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required);
-void add_padding_block(t_context *ctx, uint8_t *buffer_out, size_t *out_pos);
-void remove_padding(const t_command *cmd, t_context *ctx, uint8_t *buffer_out, size_t *out_pos);
-
-void clear_digest_ctx(t_context *ctx);
-void clear_base64_ctx(t_context *ctx);
-void clear_des_ctx(t_context *ctx);
+int get_fd(t_context *ctx, const char *file, int default_fd, bool is_output);
+uint8_t hex_to_value(char c);
+uint32_t rotate_left_28(uint32_t x, size_t n);
+uint64_t bytes_to_uint64(const uint8_t *bytes);
+ssize_t read_from_input(t_input *input, void* buffer, size_t nbytes);
 
 #endif
