@@ -43,7 +43,7 @@ int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required)
         ctx->des.prepend_salt = true;
 
     if (!ctx->des.password && !ctx->des.key)
-        ctx->des.password = ask_password(cmd, ctx);
+        ctx->des.password = ask_password(cmd, ctx, ctx->des.decrypt_mode);
 
     if (!ctx->des.salt && !ctx->des.key)
     {
@@ -117,6 +117,7 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
         return;
     }
 
+    // TODO: add subkeys to ctx and clear ctx func
     uint64_t key = bytes_to_uint64(ctx->des.key);
     uint64_t *subkeys = key_scheduler(key);
     if (!subkeys)
@@ -127,18 +128,49 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
     uint8_t buffer_in[BUFFER_SIZE];
     uint8_t buffer_out[BUFFER_SIZE];
     size_t out_pos = 0;
+    bool first_read = true;
 
     while ((bytes_read = read_from_input(&ctx->des.in, buffer_in, BUFFER_SIZE)) > 0)
     {
         total_bytes_read += bytes_read;
 
-        if (ctx->des.prepend_salt)
+        if (!ctx->des.decrypt_mode && ctx->des.prepend_salt)
             prepend_salt_to_output(ctx);
+
+        // TODO: move the logic outside while before key gen and just read 16 from input if prepend_salt
+        // Test with:
+        //  - echo "Hello World!" | ./ft_ssl des-ecb -o test.enc
+        //  - ./ft_ssl des-ecb -i test.enc -d
+        int i = 0;
+        if (ctx->des.decrypt_mode && first_read)
+        {
+            first_read = false;
+            if (ctx->des.prepend_salt)
+            {
+                uint8_t first_16_bytes[16];
+                ft_memcpy(first_16_bytes, buffer_in + i, 16);
+                
+                if (ft_memcmp(first_16_bytes, "Salted__", 8) == 0)
+                {
+                    if (bytes_read < 16)
+                        fatal_error(ctx, cmd->name, "Error reading input file", NULL, clear_des_ctx);
+
+                    ctx->des.salt = malloc(8);
+                    if (!ctx->des.salt)
+                        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
+
+                    ft_memcpy(ctx->des.salt, first_16_bytes + 8, 8);
+                    i = 16;
+                }
+                else
+                    fatal_error(ctx, cmd->name, "Bad magic number", NULL, clear_des_ctx);
+            }
+        }
 
         if ((out_pos + 8) >= BUFFER_SIZE)
             write_output(ctx->des.out, buffer_out, &out_pos);
 
-        for (int i = 0; i < bytes_read; i += 8)
+        for (; i < bytes_read; i += 8)
         {
             uint8_t block[8];
             ft_memcpy(block, buffer_in + i, 8);

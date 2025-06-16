@@ -106,7 +106,7 @@ void process_digest(const t_command *cmd, t_context *ctx);
 t_context *parse_des(const t_command *cmd, int argc, char **argv);
 uint64_t des(uint64_t block, uint64_t *subkeys, bool decrypt_mode);
 uint8_t *generate_random_bytes(const t_command *cmd, t_context *ctx, size_t nbytes);
-char *ask_password(const t_command *cmd, t_context *ctx);
+char *ask_password(const t_command *cmd, t_context *ctx, bool skip_verify);
 void des_print_mode(t_context *ctx, bool show_iv);
 uint64_t *key_scheduler(uint64_t key);
 

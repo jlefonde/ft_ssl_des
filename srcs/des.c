@@ -189,11 +189,11 @@ uint8_t *parse_hex_str(const t_command *cmd, t_context *ctx, const char *hex_str
     return (hex);
 }
 
-char *ask_password(const t_command *cmd, t_context *ctx)
+char *ask_password(const t_command *cmd, t_context *ctx, bool skip_verify)
 {
     char *password = malloc(PASSWORD_MAX_LEN + 2);
     if (!password)
-        ; // TODO
+        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
 
     char *cmd_name = ft_strmap(cmd->name, ft_toupper);
     ft_printf("enter %s encryption password: ", cmd_name);
@@ -205,20 +205,23 @@ char *ask_password(const t_command *cmd, t_context *ctx)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
     }
 
-    char password_verify[PASSWORD_MAX_LEN + 2];
-    ft_printf("Verifying - enter %s encryption password: ", cmd_name);
-    free(cmd_name);
-
-    if (!readpassphrase("", password_verify, PASSWORD_MAX_LEN + 2, RPP_REQUIRE_TTY))
+    if (!skip_verify)
     {
-        free(password);
-        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
-    }
+        char password_verify[PASSWORD_MAX_LEN + 2];
+        ft_printf("Verifying - enter %s encryption password: ", cmd_name);
+        free(cmd_name);
 
-    if (ft_strcmp(password, password_verify) != 0)
-    {
-        free(password);
-        fatal_error(ctx, cmd->name, "Password mismatch", NULL, clear_des_ctx);
+        if (!readpassphrase("", password_verify, PASSWORD_MAX_LEN + 2, RPP_REQUIRE_TTY))
+        {
+            free(password);
+            fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
+        }
+
+        if (ft_strcmp(password, password_verify) != 0)
+        {
+            free(password);
+            fatal_error(ctx, cmd->name, "Password mismatch", NULL, clear_des_ctx);
+        }
     }
 
     size_t password_len = ft_strlen(password);
