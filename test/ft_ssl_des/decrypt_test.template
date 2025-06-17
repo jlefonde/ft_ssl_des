@@ -1,4 +1,4 @@
-@test "$CMD -d $FILE $OPENSSL_FLAGS" {
+@test "$CMD -d $FILE $FT_SSL_FLAGS" {
     local valgrind_log=$(mktemp)
     openssl $CMD -pbkdf2 -md sha256 -provider default -provider legacy -in $FILE -out ${FILE}_enc $OPENSSL_FLAGS
     run valgrind --log-file="$valgrind_log" ../ft_ssl $CMD -d -i ${FILE}_enc -o $FT_SSL_OUT $FT_SSL_FLAGS
