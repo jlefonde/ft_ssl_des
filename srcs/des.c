@@ -267,18 +267,32 @@ uint8_t *decode_base64_buffer(const t_command *cmd, uint8_t *buffer, ssize_t *by
 
 static uint8_t *read_salt(const t_command *cmd, t_context *ctx)
 {
-    uint8_t *salted_header = malloc(16);
-    if (!salted_header)
-        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
+    uint8_t *salted_header; 
+    size_t buffer_size;
 
-    ssize_t bytes_read = read(ctx->des.in.fd, salted_header, 16);
+    if (ctx->des.base64_mode)
+    {
+        buffer_size = 32;
+        salted_header = malloc(buffer_size);
+        if (!salted_header)
+            fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
+    }
+    else
+    {
+        buffer_size = 16;
+        salted_header = malloc(buffer_size);
+        if (!salted_header)
+            fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);        
+    }
+
+    ssize_t bytes_read = read(ctx->des.in.fd, salted_header, buffer_size);
     if (bytes_read == -1)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
 
     if (ctx->des.base64_mode)
     {
         printf("SALTED_HEADER: ");
-        for (int i = 0; i < 16; i++)
+        for (int i = 0; i < buffer_size; i++)
             printf("%02x ", salted_header[i]);
         printf("\n");
 
@@ -287,7 +301,7 @@ static uint8_t *read_salt(const t_command *cmd, t_context *ctx)
             fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
 
         printf("SALTED_HEADER: ");
-        for (int i = 0; i < 16; i++)
+        for (int i = 0; i < buffer_size; i++)
             printf("%02x ", salted_header[i]);
         printf("\n");
     }
@@ -301,6 +315,13 @@ static uint8_t *read_salt(const t_command *cmd, t_context *ctx)
     uint8_t *salt = malloc(8);
     if (!salt)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
+    
+    size_t remaining = bytes_read - 16;
+    if (remaining > 0)
+    {
+        ft_memcpy(ctx->des.buffer.in, salted_header + 16, remaining);
+        ctx->des.buffer.bytes_read = remaining;
+    }
 
     return (ft_memcpy(salt, salted_header + 8, 8));
 }
@@ -345,6 +366,18 @@ static uint64_t *key_scheduler(uint64_t key)
 
 int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required)
 {
+    ctx->des.buffer.bytes_read = 0;
+    ctx->des.buffer.total_bytes_read = 0;
+    ctx->des.buffer.out_pos = 0;
+
+    ctx->des.buffer.in = malloc(BASE64_BUFFER_SIZE);
+    if (!ctx->des.buffer.in)
+        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
+
+    ctx->des.buffer.out = malloc(BASE64_BUFFER_SIZE * 2);
+    if (!ctx->des.buffer.out)
+        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
+
     if (ctx->des.iv && !iv_required)
         write(STDERR_FILENO, "warning: iv not used by this cipher\n", 36);
 
@@ -392,18 +425,6 @@ int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required)
     ctx->des.subkeys = key_scheduler(bytes_to_uint64(ctx->des.key));
     if (!ctx->des.subkeys)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
-
-    ctx->des.buffer.in = malloc(BASE64_BUFFER_SIZE);
-    if (!ctx->des.buffer.in)
-        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
-
-    ctx->des.buffer.out = malloc(BASE64_BUFFER_SIZE * 2);
-    if (!ctx->des.buffer.out)
-        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
-
-    ctx->des.buffer.bytes_read = 0;
-    ctx->des.buffer.total_bytes_read = 0;
-    ctx->des.buffer.out_pos = 0;
 
     return (1);
 }
