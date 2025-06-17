@@ -251,6 +251,36 @@ static void assign_derived_key(const t_command *cmd, t_context *ctx, uint8_t **d
     ft_memcpy(*dest, dk, n);
 }
 
+void decode_partial_base64_buffer(const t_command *cmd, t_context *ctx, size_t remaining)
+{
+    if (remaining == 0)
+    {
+        ctx->des.buffer.in = decode_base64_buffer(cmd, ctx->des.buffer.in, &ctx->des.buffer.bytes_read);
+        if (!ctx->des.buffer.in)
+            fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
+        return;
+    }
+
+    uint8_t *encoded_buffer = malloc(ctx->des.buffer.bytes_read - remaining);
+    if (!encoded_buffer)
+        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
+    
+    ssize_t encoded_buffer_size = ctx->des.buffer.bytes_read - remaining;
+    ft_memcpy(encoded_buffer, ctx->des.buffer.in + remaining, encoded_buffer_size);
+
+    uint8_t *decoded_buffer = decode_base64_buffer(cmd, encoded_buffer, &encoded_buffer_size);
+    if (!decoded_buffer)
+    {
+        free(encoded_buffer);
+        fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
+    }
+
+    ft_memcpy(ctx->des.buffer.in + remaining, decoded_buffer, encoded_buffer_size);
+    free(decoded_buffer);
+
+    ctx->des.buffer.bytes_read = remaining + encoded_buffer_size;
+}
+
 uint8_t *decode_base64_buffer(const t_command *cmd, uint8_t *buffer, ssize_t *bytes_read)
 {
     size_t decoded_size = 0;
@@ -291,19 +321,9 @@ static uint8_t *read_salt(const t_command *cmd, t_context *ctx)
 
     if (ctx->des.base64_mode)
     {
-        printf("SALTED_HEADER: ");
-        for (int i = 0; i < buffer_size; i++)
-            printf("%02x ", salted_header[i]);
-        printf("\n");
-
         salted_header = decode_base64_buffer(cmd, salted_header, &bytes_read);
         if (!salted_header)
             fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
-
-        printf("SALTED_HEADER: ");
-        for (int i = 0; i < buffer_size; i++)
-            printf("%02x ", salted_header[i]);
-        printf("\n");
     }
 
     if (ft_memcmp(salted_header, "Salted__", 8) != 0)
