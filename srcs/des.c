@@ -101,6 +101,8 @@ void clear_des_ctx(t_context *ctx)
     free(ctx->des.salt);
     free(ctx->des.iv);
     free(ctx->des.subkeys);
+    free(ctx->des.buffer.in);
+    free(ctx->des.buffer.out);
     if (ctx->des.in.fd != STDIN_FILENO)
         close(ctx->des.in.fd);
     if (ctx->des.out_fd != STDOUT_FILENO)
@@ -249,13 +251,46 @@ static void assign_derived_key(const t_command *cmd, t_context *ctx, uint8_t **d
     ft_memcpy(*dest, dk, n);
 }
 
+uint8_t *decode_base64_buffer(const t_command *cmd, uint8_t *buffer, ssize_t *bytes_read)
+{
+    size_t decoded_size = 0;
+
+    uint8_t *decoded_buffer = decode_base64_flag(cmd, buffer, *bytes_read, &decoded_size);
+    if (!decoded_buffer)
+        return (NULL);
+
+    *bytes_read = decoded_size;
+
+    free(buffer);
+    return (decoded_buffer);
+}
+
 static uint8_t *read_salt(const t_command *cmd, t_context *ctx)
 {
-    uint8_t salted_header[16];
+    uint8_t *salted_header = malloc(16);
+    if (!salted_header)
+        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
 
     ssize_t bytes_read = read(ctx->des.in.fd, salted_header, 16);
     if (bytes_read == -1)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
+
+    if (ctx->des.base64_mode)
+    {
+        printf("SALTED_HEADER: ");
+        for (int i = 0; i < 16; i++)
+            printf("%02x ", salted_header[i]);
+        printf("\n");
+
+        salted_header = decode_base64_buffer(cmd, salted_header, &bytes_read);
+        if (!salted_header)
+            fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
+
+        printf("SALTED_HEADER: ");
+        for (int i = 0; i < 16; i++)
+            printf("%02x ", salted_header[i]);
+        printf("\n");
+    }
 
     if (ft_memcmp(salted_header, "Salted__", 8) != 0)
         fatal_error(ctx, cmd->name, "Bad magic number", NULL, clear_des_ctx);
@@ -357,6 +392,18 @@ int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required)
     ctx->des.subkeys = key_scheduler(bytes_to_uint64(ctx->des.key));
     if (!ctx->des.subkeys)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
+
+    ctx->des.buffer.in = malloc(BASE64_BUFFER_SIZE);
+    if (!ctx->des.buffer.in)
+        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
+
+    ctx->des.buffer.out = malloc(BASE64_BUFFER_SIZE * 2);
+    if (!ctx->des.buffer.out)
+        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
+
+    ctx->des.buffer.bytes_read = 0;
+    ctx->des.buffer.total_bytes_read = 0;
+    ctx->des.buffer.out_pos = 0;
 
     return (1);
 }

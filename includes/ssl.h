@@ -44,6 +44,15 @@ typedef struct s_input
     int             fd;
 }	t_input;
 
+typedef struct s_buffer
+{
+    uint8_t *in;
+    uint8_t *out;
+    ssize_t bytes_read;
+    ssize_t total_bytes_read;
+    size_t out_pos;
+}   t_buffer;
+
 typedef union u_context
 {
     struct
@@ -66,17 +75,18 @@ typedef union u_context
 
     struct
     {
-        t_input in;
-        int     out_fd;
-        char    *password;
-        uint8_t *key;
-        uint8_t *salt;
-        uint8_t *iv;
-        uint64_t *subkeys;
-        bool    base64_mode;
-        bool    decrypt_mode;
-        bool    print_mode;
-        bool    prepend_salt;
+        t_input     in;
+        int         out_fd;
+        char        *password;
+        uint8_t     *key;
+        uint8_t     *salt;
+        uint8_t     *iv;
+        uint64_t    *subkeys;
+        bool        base64_mode;
+        bool        decrypt_mode;
+        bool        print_mode;
+        bool        prepend_salt;
+        t_buffer    buffer;
     }   des;
 }	t_context;
 
