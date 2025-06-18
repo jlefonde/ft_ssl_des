@@ -263,6 +263,7 @@ uint8_t *encode_base64_flag(const t_command *cmd, uint8_t *input, size_t n, size
 
 uint8_t *decode_base64_flag(const t_command *cmd, uint8_t *input, size_t n, size_t *decoded_size)
 {
+    printf("SIZE: %ld\n", n);
     uint8_t *out_buffer = malloc(n);
     if (!out_buffer)
     {
@@ -285,7 +286,9 @@ uint8_t *decode_base64_flag(const t_command *cmd, uint8_t *input, size_t n, size
             || (npad > 0 && input[i] != '=')
             || (byte_count < 2 && input[i] == '='))
         {
+            printf("HERE3");
             print_error(cmd->name, "base64", "Invalid input");
+            free(out_buffer);
             return (NULL);
         }
 
@@ -307,7 +310,9 @@ uint8_t *decode_base64_flag(const t_command *cmd, uint8_t *input, size_t n, size
 
     if (byte_count != 0 || (byte_count != 3 && npad != 0))
     {
+        printf("HERE4");
         print_error(cmd->name, "base64", "Invalid input");
+        free(out_buffer);
         return (NULL);
     }
     

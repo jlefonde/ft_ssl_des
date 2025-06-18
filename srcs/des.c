@@ -103,9 +103,9 @@ void clear_des_ctx(t_context *ctx)
     free(ctx->des.subkeys);
     free(ctx->des.buffer.in);
     free(ctx->des.buffer.out);
-    if (ctx->des.in.fd != STDIN_FILENO)
+    if (ctx->des.in.fd > 1)
         close(ctx->des.in.fd);
-    if (ctx->des.out_fd != STDOUT_FILENO)
+    if (ctx->des.out_fd > 1)
         close(ctx->des.out_fd);
     free(ctx);
 }
@@ -255,6 +255,7 @@ void decode_partial_base64_buffer(const t_command *cmd, t_context *ctx, size_t r
 {
     if (remaining == 0)
     {
+        printf("BR: %ld\n", ctx->des.buffer.bytes_read);
         ctx->des.buffer.in = decode_base64_buffer(cmd, ctx->des.buffer.in, &ctx->des.buffer.bytes_read);
         if (!ctx->des.buffer.in)
             fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
@@ -287,7 +288,10 @@ uint8_t *decode_base64_buffer(const t_command *cmd, uint8_t *buffer, ssize_t *by
 
     uint8_t *decoded_buffer = decode_base64_flag(cmd, buffer, *bytes_read, &decoded_size);
     if (!decoded_buffer)
+    {
+        printf("HERE2");
         return (NULL);
+    }
 
     *bytes_read = decoded_size;
 
@@ -386,10 +390,6 @@ static uint64_t *key_scheduler(uint64_t key)
 
 int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required)
 {
-    ctx->des.buffer.bytes_read = 0;
-    ctx->des.buffer.total_bytes_read = 0;
-    ctx->des.buffer.out_pos = 0;
-
     ctx->des.buffer.in = malloc(BASE64_BUFFER_SIZE);
     if (!ctx->des.buffer.in)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
@@ -530,10 +530,16 @@ t_context *parse_des(const t_command *cmd, int argc, char **argv)
     ctx->des.password = NULL;
     ctx->des.salt = NULL;
     ctx->des.iv = NULL;
+    ctx->des.subkeys = NULL;
     ctx->des.decrypt_mode = false;
     ctx->des.base64_mode = false;
     ctx->des.print_mode = false;
     ctx->des.prepend_salt = false;
+    ctx->des.buffer.in = NULL;
+    ctx->des.buffer.out = NULL;
+    ctx->des.buffer.bytes_read = 0;
+    ctx->des.buffer.total_bytes_read = 0;
+    ctx->des.buffer.out_pos = 0;
 
     char *in_file = NULL;
     char *out_file = NULL;
