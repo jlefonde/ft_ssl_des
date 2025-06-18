@@ -310,7 +310,7 @@ uint8_t *decode_base64_flag(const t_command *cmd, uint8_t *input, size_t n, size
 
     if (byte_count != 0 || (byte_count != 3 && npad != 0))
     {
-        printf("HERE4");
+        printf("HERE4 %ld\n", byte_count);
         print_error(cmd->name, "base64", "Invalid input");
         free(out_buffer);
         return (NULL);
