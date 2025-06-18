@@ -23,6 +23,7 @@ void append_cipher_to_output(uint64_t cipher, uint8_t *buffer, size_t *buffer_po
 void pkcs7(uint8_t *block, ssize_t remaining_bytes);
 void add_padding_block(t_context *ctx, uint8_t *out_buffer, size_t *out_pos);
 void remove_padding(const t_command *cmd, t_context *ctx, uint8_t *out_buffer, size_t *out_pos);
+void write_des_output(const t_command *cmd, t_context *ctx);
 t_context *parse_des(const t_command *cmd, int argc, char **argv);
 uint64_t des(uint64_t block, uint64_t *subkeys, bool decrypt_mode);
 void clear_des_ctx(t_context *ctx);

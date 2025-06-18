@@ -214,6 +214,53 @@ static void decode_base64(const t_command *cmd, t_context *ctx)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_base64_ctx);
 }
 
+uint8_t *encode_base64_flag(const t_command *cmd, uint8_t *input, size_t n, size_t *encoded_size)
+{
+    uint8_t *out_buffer = malloc(BASE64_BUFFER_SIZE * 2);
+    if (!out_buffer)
+    {
+        print_error(cmd->name, "base64", strerror(errno));
+        return (NULL);
+    }
+
+    size_t  total_bytes_written = 0;
+    size_t  out_pos = 0;
+
+    for (int i = 0; i < n; i += 3)
+    {
+        int nbytes = n - i > 3 ? 3 : n - i;
+        int npad = 3 - nbytes;
+
+        ssize_t indices[4] = { -1, -1, -1, -1 };
+
+        indices[0] = input[i] >> 2;
+        indices[1] = ((input[i] & 0b00000011) << 4);
+        if (nbytes > 1)
+        {
+            indices[1] |= (input[i + 1] >> 4);
+            indices[2] = ((input[i + 1] & 0b00001111) << 2);
+            if (nbytes > 2)
+            {
+                indices[2] |= ((input[i + 2] & 0b11000000) >> 6);
+                indices[3] = input[i + 2] & 0b00111111;
+            }
+        }
+
+        for (int j = 0; j < 4; j++)
+            if (indices[j] >= 0)
+                append_output(out_buffer, &out_pos, &total_bytes_written, g_base64_alphabet[indices[j]]);
+
+        for (int j = 0; j < npad; j++)
+            append_output(out_buffer, &out_pos, &total_bytes_written, '=');
+    }
+
+    if ((total_bytes_written % 64) != 0)
+        out_buffer[out_pos++] = '\n';
+
+    *encoded_size = out_pos;
+    return (out_buffer);
+}
+
 uint8_t *decode_base64_flag(const t_command *cmd, uint8_t *input, size_t n, size_t *decoded_size)
 {
     uint8_t *out_buffer = malloc(n);
@@ -223,8 +270,8 @@ uint8_t *decode_base64_flag(const t_command *cmd, uint8_t *input, size_t n, size
         return (NULL);
     }
 
-    size_t  out_pos = 0;
     uint8_t bytes[4];
+    size_t out_pos = 0;
     size_t byte_count = 0;
     size_t npad = 0;
 

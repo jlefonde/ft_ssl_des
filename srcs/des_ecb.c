@@ -24,7 +24,7 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
             prepend_salt_to_output(ctx);
 
         if ((ctx->des.buffer.out_pos + 8) >= BASE64_BUFFER_SIZE)
-            write_output(ctx->des.out_fd, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
+            write_des_output(cmd, ctx);
 
         for (int i = 0; i < ctx->des.buffer.bytes_read; i += 8)
         {
@@ -51,7 +51,7 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
         remove_padding(cmd, ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
 
     if (ctx->des.buffer.out_pos > 0)
-        write_output(ctx->des.out_fd, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
+        write_des_output(cmd, ctx);
 
     if (ctx->des.buffer.bytes_read == -1)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_base64_ctx);

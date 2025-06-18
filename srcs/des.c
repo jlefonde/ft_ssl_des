@@ -499,6 +499,22 @@ void remove_padding(const t_command *cmd, t_context *ctx, uint8_t *out_buffer, s
     *out_pos -= last_byte;
 }
 
+void write_des_output(const t_command *cmd, t_context *ctx)
+{
+    if (!ctx->des.decrypt_mode && ctx->des.base64_mode)
+    {
+        size_t encoded_size = 0;
+        uint8_t *encoded_buffer = encode_base64_flag(cmd, ctx->des.buffer.out, ctx->des.buffer.out_pos, &encoded_size);
+        if (!encoded_buffer)
+            fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
+        free(ctx->des.buffer.out);
+        ctx->des.buffer.out = encoded_buffer;
+        ctx->des.buffer.out_pos = encoded_size;
+    }
+
+    write_output(ctx->des.out_fd, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
+}
+
 t_context *parse_des(const t_command *cmd, int argc, char **argv)
 {   
     t_context *ctx = (t_context *)malloc(sizeof(t_context));
