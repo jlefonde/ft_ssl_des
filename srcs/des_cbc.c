@@ -58,9 +58,9 @@ void process_des_cbc(const t_command *cmd, int argc, char **argv)
                 for (int j = 0; j < 8; j++)
                 {
                     if (first_block)
-                        block[j] = ((decrypted >> (j * 8)) & 0xFF) ^ ctx->des.iv[j];
+                        block[j] = ((decrypted >> (56 - (j * 8))) & 0xFF) ^ ctx->des.iv[j];
                     else
-                        block[j] = ((decrypted >> (j * 8)) & 0xFF) ^ ((cipher >> (j * 8)) & 0xFF);
+                        block[j] = ((decrypted >> (56 - (j * 8))) & 0xFF) ^ ((cipher >> (56 - (j * 8))) & 0xFF);
                 }
 
                 cipher = current_cipher;
