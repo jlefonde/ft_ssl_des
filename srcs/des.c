@@ -251,13 +251,13 @@ static void assign_derived_key(const t_command *cmd, t_context *ctx, uint8_t **d
     ft_memcpy(*dest, dk, n);
 }
 
-void decode_partial_base64_buffer(const t_command *cmd, t_context *ctx, size_t remaining)
+void decode_partial_base64_buffer(const t_command *cmd, t_context *ctx, size_t remaining, size_t *current_size)
 {
     static uint8_t leftover[3];
     static size_t leftover_size = 0;
     static bool first_call = true;
     
-    printf("HERE\n");
+    printf("DECODE\n");
     if (remaining == 0 && leftover_size == 0 && !first_call)
     {
         ctx->des.buffer.in = decode_base64_buffer(cmd, ctx->des.buffer.in, &ctx->des.buffer.bytes_read);
@@ -313,13 +313,21 @@ void decode_partial_base64_buffer(const t_command *cmd, t_context *ctx, size_t r
     if (!decoded_buffer)
         fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
 
-    for (int i = 0; i < decode_size; i++)
-        write(ctx->des.out_fd, &decoded_buffer[i], 1);
-    
+    for (int i = 1; i <= decode_size; i++)
+    {
+        // write(ctx->des.out_fd, &decoded_buffer[i], 1);
+        printf("%02x ", decoded_buffer[i - 1]);
+        if (i % 8 == 0)
+            printf(" ");
+        if (i % 16 == 0)
+            printf("\n");
+    }
+    printf("\n");
+
     ft_memcpy(ctx->des.buffer.in + remaining, decoded_buffer, decode_size);
     free(decoded_buffer);
     
-    ctx->des.buffer.bytes_read = remaining + decode_size;
+    *current_size = remaining + decode_size;
 }
 
 uint8_t *decode_base64_buffer(const t_command *cmd, uint8_t *buffer, ssize_t *bytes_read)
@@ -523,14 +531,32 @@ void add_padding_block(t_context *ctx, uint8_t *out_buffer, size_t *out_pos)
 
 void remove_padding(const t_command *cmd, t_context *ctx, uint8_t *out_buffer, size_t *out_pos)
 {
+    // for (size_t i = 1; i <= *out_pos; i++)
+    // {
+    //     printf("%02x ", out_buffer[i - 1]);
+    //     if (i % 8 == 0)
+    //         printf(" ");
+    //     if (i % 16 == 0)
+    //         printf("\n");
+    // }
+    // printf("\n");
+
+    fflush(0);
     uint8_t last_byte = out_buffer[*out_pos - 1];
+
+    printf("Total buffer size: %zu\n", *out_pos);
+    printf("Last few bytes: ");
+    for (int i = 1; i <= 16 && i <= *out_pos; i++) {
+        printf("%02x ", out_buffer[*out_pos - i]);
+    }
+    printf("\n");
     if (last_byte < 1 || last_byte > 8)
-        fatal_error(ctx, cmd->name, "Corrupted data", NULL, clear_des_ctx);
+        fatal_error(ctx, cmd->name, "Corrupted data1", NULL, clear_des_ctx);
 
     for (size_t i = *out_pos - last_byte; i < *out_pos; i++)
     {
         if (out_buffer[i] != last_byte)
-            fatal_error(ctx, cmd->name, "Corrupted data", NULL, clear_des_ctx);
+            fatal_error(ctx, cmd->name, "Corrupted data2", NULL, clear_des_ctx);
     }
 
     *out_pos -= last_byte;

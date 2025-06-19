@@ -16,7 +16,7 @@ void process_des_cbc(const t_command *cmd, int argc, char **argv);
 void process_des_ecb(const t_command *cmd, int argc, char **argv);
 
 int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required);
-void decode_partial_base64_buffer(const t_command *cmd, t_context *ctx, size_t remaining);
+void decode_partial_base64_buffer(const t_command *cmd, t_context *ctx, size_t remaining, size_t *current_size);
 uint8_t *decode_base64_buffer(const t_command *cmd, uint8_t *buffer, ssize_t *bytes_read);
 void prepend_salt_to_output(t_context *ctx);
 void append_cipher_to_output(uint64_t cipher, uint8_t *buffer, size_t *buffer_pos);
