@@ -38,8 +38,12 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
             append_cipher_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
         }
 
+        printf("BR: %lu\n", ctx->des.buffer.bytes_read);
         if (ctx->des.buffer.bytes_read < BASE64_BUFFER_SIZE)
+        {
+            printf("HERE2");
             break;
+        }
 
         remaining = 0;
     }

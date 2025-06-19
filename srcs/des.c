@@ -253,33 +253,73 @@ static void assign_derived_key(const t_command *cmd, t_context *ctx, uint8_t **d
 
 void decode_partial_base64_buffer(const t_command *cmd, t_context *ctx, size_t remaining)
 {
-    if (remaining == 0)
+    static uint8_t leftover[3];
+    static size_t leftover_size = 0;
+    static bool first_call = true;
+    
+    printf("HERE\n");
+    if (remaining == 0 && leftover_size == 0 && !first_call)
     {
-        printf("BR: %ld\n", ctx->des.buffer.bytes_read);
         ctx->des.buffer.in = decode_base64_buffer(cmd, ctx->des.buffer.in, &ctx->des.buffer.bytes_read);
         if (!ctx->des.buffer.in)
             fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
         return;
     }
 
-    uint8_t *encoded_buffer = malloc(ctx->des.buffer.bytes_read - remaining);
+    first_call = false;
+
+    // Allocate a buffer that can hold leftover + remaining + new data
+    size_t encoded_buffer_size = ctx->des.buffer.bytes_read - remaining;
+    uint8_t *encoded_buffer = malloc(leftover_size + encoded_buffer_size);
     if (!encoded_buffer)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
     
-    ssize_t encoded_buffer_size = ctx->des.buffer.bytes_read - remaining;
-    ft_memcpy(encoded_buffer, ctx->des.buffer.in + remaining, encoded_buffer_size);
-
-    uint8_t *decoded_buffer = decode_base64_buffer(cmd, encoded_buffer, &encoded_buffer_size);
-    if (!decoded_buffer)
-    {
-        free(encoded_buffer);
-        fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
+    // Copy any leftover bytes from previous buffer first
+    if (leftover_size > 0)
+        ft_memcpy(encoded_buffer, leftover, leftover_size);
+    
+    // Copy the new data after the leftover bytes
+    ft_memcpy(encoded_buffer + leftover_size, ctx->des.buffer.in + remaining, encoded_buffer_size);
+    
+    // Adjust the total size
+    encoded_buffer_size += leftover_size;
+    
+    // Calculate complete blocks (multiples of 4 after ignoring whitespace)
+    size_t valid_chars = 0;
+    for (size_t i = 0; i < encoded_buffer_size; i++)
+        if (!ft_isspace(encoded_buffer[i]))
+            valid_chars++;
+    
+    size_t complete_blocks = (valid_chars / 4) * 4;
+    leftover_size = valid_chars - complete_blocks;
+    
+    // If we have leftover characters, save them for next buffer
+    if (leftover_size > 0) {
+        size_t j = 0;
+        for (size_t i = encoded_buffer_size - 1; j < leftover_size; i--) {
+            if (!ft_isspace(encoded_buffer[i]))
+                leftover[leftover_size - (++j)] = encoded_buffer[i];
+        }
+        
+        // Adjust the size to only include complete blocks
+        encoded_buffer_size -= leftover_size;
+    } else {
+        leftover_size = 0;
     }
+    
+    // Decode only the complete part
+    ssize_t decode_size = encoded_buffer_size;
+    uint8_t *decoded_buffer = decode_base64_buffer(cmd, encoded_buffer, &decode_size);
+    if (!decoded_buffer)
+        fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
 
-    ft_memcpy(ctx->des.buffer.in + remaining, decoded_buffer, encoded_buffer_size);
+    for (int i = 0; i < decode_size; i++)
+        write(ctx->des.out_fd, &decoded_buffer[i], 1);
+    
+    ft_memcpy(ctx->des.buffer.in + remaining, decoded_buffer, decode_size);
     free(decoded_buffer);
-
-    ctx->des.buffer.bytes_read = remaining + encoded_buffer_size;
+    
+    ctx->des.buffer.bytes_read = remaining + decode_size;
 }
 
 uint8_t *decode_base64_buffer(const t_command *cmd, uint8_t *buffer, ssize_t *bytes_read)
@@ -288,10 +328,7 @@ uint8_t *decode_base64_buffer(const t_command *cmd, uint8_t *buffer, ssize_t *by
 
     uint8_t *decoded_buffer = decode_base64_flag(cmd, buffer, *bytes_read, &decoded_size);
     if (!decoded_buffer)
-    {
-        printf("HERE2");
         return (NULL);
-    }
 
     *bytes_read = decoded_size;
 
