@@ -19,7 +19,7 @@ void process_des_cbc(const t_command *cmd, int argc, char **argv)
         ctx->des.buffer.bytes_read += remaining;
 
         if (ctx->des.decrypt_mode && ctx->des.base64_mode)
-            decode_partial_base64_buffer(cmd, ctx, remaining);
+            decode_partial_base64_buffer(cmd, ctx, remaining, 0);
 
         ctx->des.buffer.total_bytes_read += ctx->des.buffer.bytes_read;
 

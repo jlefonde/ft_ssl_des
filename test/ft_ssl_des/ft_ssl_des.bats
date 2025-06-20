@@ -20,11 +20,11 @@ setup_file() {
     done
 }
 
-# teardown_file() {
-#     for file in "${files[@]}"; do
-#         rm -f "$file" "${file}_enc"
-#     done
-# }
+teardown_file() {
+    for file in "${files[@]}"; do
+        rm -f "$file" "${file}_enc"
+    done
+}
 
 declare -g files=( "0B" "1B" "2B" "3B" "4B" "32B" "64B" "1KB" "4KB" "64KB" "1MB" )
 

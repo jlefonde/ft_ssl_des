@@ -34,9 +34,11 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
             write_des_output(cmd, ctx);
 
         printf("CURRENT_SIZE: %zu\n", current_size);
+        // size_t leftover_size = current_size % 8;
+        // size_t bytes_to_process = current_size - leftover_size;
+        // printf("LEFTOVER_SIZE: %zu\n", leftover_size);
+        // printf("BYTES_TO_PROCESS: %zu\n", bytes_to_process);
 
-        // TODO: the error when decoding base64 is due to the complete plaintext decoded that might not be a multiple of 8 bytes
-        // meaning during this read iteration, it will cipher a block that is not complete since the rest is in the next read 
         for (int i = 0; i < current_size; i += 8)
         {
             uint8_t block[8];
