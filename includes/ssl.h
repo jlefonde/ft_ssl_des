@@ -87,6 +87,9 @@ typedef union u_context
         bool        print_mode;
         bool        prepend_salt;
         t_buffer    buffer;
+        uint8_t     remainder[8];
+        size_t      remainder_size;
+        size_t      total_cipher_size;
     }   des;
 }	t_context;
 

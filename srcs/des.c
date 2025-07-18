@@ -251,94 +251,11 @@ static void assign_derived_key(const t_command *cmd, t_context *ctx, uint8_t **d
     ft_memcpy(*dest, dk, n);
 }
 
-void decode_partial_base64_buffer(const t_command *cmd, t_context *ctx, size_t remaining, size_t *current_size)
+uint8_t *decode_base64_buffer(const t_command *cmd, uint8_t *buffer, ssize_t bytes_read, size_t *decoded_size)
 {
-    static uint8_t leftover[3];
-    static size_t leftover_size = 0;
-    static bool first_call = true;
-    
-    printf("DECODE\n");
-    if (remaining == 0 && leftover_size == 0 && !first_call)
-    {
-        ctx->des.buffer.in = decode_base64_buffer(cmd, ctx->des.buffer.in, &ctx->des.buffer.bytes_read);
-        if (!ctx->des.buffer.in)
-            fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
-        return;
-    }
-
-    first_call = false;
-
-    // Allocate a buffer that can hold leftover + remaining + new data
-    size_t encoded_buffer_size = ctx->des.buffer.bytes_read - remaining;
-    uint8_t *encoded_buffer = malloc(leftover_size + encoded_buffer_size);
-    if (!encoded_buffer)
-        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
-    
-    // Copy any leftover bytes from previous buffer first
-    if (leftover_size > 0)
-        ft_memcpy(encoded_buffer, leftover, leftover_size);
-    
-    // Copy the new data after the leftover bytes
-    ft_memcpy(encoded_buffer + leftover_size, ctx->des.buffer.in + remaining, encoded_buffer_size);
-    
-    // Adjust the total size
-    encoded_buffer_size += leftover_size;
-    
-    // Calculate complete blocks (multiples of 4 after ignoring whitespace)
-    size_t valid_chars = 0;
-    for (size_t i = 0; i < encoded_buffer_size; i++)
-        if (!ft_isspace(encoded_buffer[i]))
-            valid_chars++;
-    
-    size_t complete_blocks = (valid_chars / 4) * 4;
-    leftover_size = valid_chars - complete_blocks;
-    
-    // If we have leftover characters, save them for next buffer
-    if (leftover_size > 0) {
-        size_t j = 0;
-        for (size_t i = encoded_buffer_size - 1; j < leftover_size; i--) {
-            if (!ft_isspace(encoded_buffer[i]))
-                leftover[leftover_size - (++j)] = encoded_buffer[i];
-        }
-        
-        // Adjust the size to only include complete blocks
-        encoded_buffer_size -= leftover_size;
-    } else {
-        leftover_size = 0;
-    }
-    
-    // Decode only the complete part
-    ssize_t decode_size = encoded_buffer_size;
-    uint8_t *decoded_buffer = decode_base64_buffer(cmd, encoded_buffer, &decode_size);
-    if (!decoded_buffer)
-        fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
-
-    for (int i = 1; i <= decode_size; i++)
-    {
-        // write(ctx->des.out_fd, &decoded_buffer[i], 1);
-        printf("%02x ", decoded_buffer[i - 1]);
-        if (i % 8 == 0)
-            printf(" ");
-        if (i % 16 == 0)
-            printf("\n");
-    }
-    printf("\n");
-
-    ft_memcpy(ctx->des.buffer.in + remaining, decoded_buffer, decode_size);
-    free(decoded_buffer);
-    
-    *current_size = remaining + decode_size;
-}
-
-uint8_t *decode_base64_buffer(const t_command *cmd, uint8_t *buffer, ssize_t *bytes_read)
-{
-    size_t decoded_size = 0;
-
-    uint8_t *decoded_buffer = decode_base64_flag(cmd, buffer, *bytes_read, &decoded_size);
+    uint8_t *decoded_buffer = decode_base64_flag(cmd, buffer, bytes_read, decoded_size);
     if (!decoded_buffer)
         return (NULL);
-
-    *bytes_read = decoded_size;
 
     free(buffer);
     return (decoded_buffer);
@@ -349,28 +266,20 @@ static uint8_t *read_salt(const t_command *cmd, t_context *ctx)
     uint8_t *salted_header; 
     size_t buffer_size;
 
-    if (ctx->des.base64_mode)
-    {
-        buffer_size = 32;
-        salted_header = malloc(buffer_size);
-        if (!salted_header)
-            fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
-    }
-    else
-    {
-        buffer_size = 16;
-        salted_header = malloc(buffer_size);
-        if (!salted_header)
-            fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);        
-    }
+    buffer_size = ctx->des.base64_mode ? 24 : 16;
 
+    salted_header = malloc(buffer_size);
+    if (!salted_header)
+        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);        
+    
     ssize_t bytes_read = read(ctx->des.in.fd, salted_header, buffer_size);
     if (bytes_read == -1)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
 
+    size_t header_size = bytes_read;
     if (ctx->des.base64_mode)
     {
-        salted_header = decode_base64_buffer(cmd, salted_header, &bytes_read);
+        salted_header = decode_base64_buffer(cmd, salted_header, bytes_read, &header_size);
         if (!salted_header)
             fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
     }
@@ -378,18 +287,18 @@ static uint8_t *read_salt(const t_command *cmd, t_context *ctx)
     if (ft_memcmp(salted_header, "Salted__", 8) != 0)
         fatal_error(ctx, cmd->name, "Bad magic number", NULL, clear_des_ctx);
 
-    if (bytes_read < 16)
+    if (header_size < 16)
         fatal_error(ctx, cmd->name, "Error reading input file", NULL, clear_des_ctx);
 
     uint8_t *salt = malloc(8);
     if (!salt)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
     
-    size_t remaining = bytes_read - 16;
+    size_t remaining = header_size - 16;
     if (remaining > 0)
     {
-        ft_memcpy(ctx->des.buffer.in, salted_header + 16, remaining);
-        ctx->des.buffer.bytes_read = remaining;
+        ft_memcpy(ctx->des.remainder, salted_header + 16, remaining);
+        ctx->des.remainder_size = remaining;
     }
 
     return (ft_memcpy(salt, salted_header + 8, 8));
@@ -603,6 +512,8 @@ t_context *parse_des(const t_command *cmd, int argc, char **argv)
     ctx->des.buffer.bytes_read = 0;
     ctx->des.buffer.total_bytes_read = 0;
     ctx->des.buffer.out_pos = 0;
+    ctx->des.total_cipher_size = 0;
+    ctx->des.remainder_size = 0;
 
     char *in_file = NULL;
     char *out_file = NULL;
