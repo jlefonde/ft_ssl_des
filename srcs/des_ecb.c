@@ -38,6 +38,9 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
         
         printf("bytes_read: %ld\n", ctx->des.buffer.bytes_read);
         printf("size: %ld\n", size);
+        printf("size %% 8 == 0: %d\n", (size % 8) == 0);
+        printf("size + remainder_size %% 8 == 0: %d\n", (size + ctx->des.remainder_size) % 8 == 0);
+        printf("%lu\n", (size + ctx->des.remainder_size) / 8);
 
         ctx->des.buffer.total_bytes_read += ctx->des.buffer.bytes_read;
 
@@ -47,17 +50,52 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
 
         if ((ctx->des.buffer.out_pos + 8) >= BASE64_BUFFER_SIZE)
             write_des_output(cmd, ctx);
-
-        for (int i = 0; i < ctx->des.buffer.bytes_read; i += 8)
+            
+        uint8_t block[8];
+        size_t processed = 0;
+        if (ctx->des.remainder_size > 0)
         {
-            uint8_t block[8];
+            size_t bytes_needed = 8 - ctx->des.remainder_size;
+
+            if (size >= bytes_needed)
+            {
+                ft_memcpy(block, ctx->des.remainder, ctx->des.remainder_size);
+                ft_memcpy(block + ctx->des.remainder_size, ctx->des.buffer.in, bytes_needed);
+
+                if (!ctx->des.decrypt_mode && bytes_needed == size && ctx->des.buffer.bytes_read < BASE64_BUFFER_SIZE)
+                    pkcs7(block, 8);
+                    
+                uint64_t cipher = des(bytes_to_uint64(block), ctx->des.subkeys, ctx->des.decrypt_mode);
+                append_cipher_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
+
+                processed = bytes_needed;
+                ctx->des.remainder_size = 0;
+            }
+            else
+            {
+                ft_memcpy(ctx->des.remainder + ctx->des.remainder_size, ctx->des.buffer.in, size);
+                ctx->des.remainder_size += size;
+                processed = size;
+            }
+        }
+
+        for (size_t i = processed; i + 8 <= size; i += 8)
+        {
             ft_memcpy(block, ctx->des.buffer.in + i, 8);
-
-            if (!ctx->des.decrypt_mode)
-                pkcs7(block, ctx->des.buffer.bytes_read - i);
-
+            
+            if (!ctx->des.decrypt_mode && i + 8 == size && ctx->des.buffer.bytes_read < BASE64_BUFFER_SIZE)
+                pkcs7(block, size - i);
+                
             uint64_t cipher = des(bytes_to_uint64(block), ctx->des.subkeys, ctx->des.decrypt_mode);
             append_cipher_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
+        }
+
+        size_t remaining_bytes = size - processed;
+        if (remaining_bytes % 8 != 0)
+        {
+            size_t remainder_offset = processed + ((remaining_bytes / 8) * 8);
+            ft_memcpy(ctx->des.remainder, ctx->des.buffer.in + remainder_offset, remaining_bytes % 8);
+            ctx->des.remainder_size = remaining_bytes % 8;
         }
 
         if (ctx->des.buffer.bytes_read < BASE64_BUFFER_SIZE)

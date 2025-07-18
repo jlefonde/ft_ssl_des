@@ -312,7 +312,7 @@ uint8_t *decode_base64_flag(const t_command *cmd, uint8_t *input, size_t n, size
         free(out_buffer);
         return (NULL);
     }
-    
+
     *decoded_size = out_pos;
     return (out_buffer);
 }
