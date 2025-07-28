@@ -31,11 +31,11 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
         size_t size = ctx->des.buffer.bytes_read;
         if (ctx->des.decrypt_mode && ctx->des.base64_mode)
         {
-            ctx->des.buffer.in = decode_base64_buffer(cmd, ctx->des.buffer.in, ctx->des.buffer.bytes_read, &size);
-            if (!ctx->des.buffer.in)
-                fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
+            // buffer.in will contain the remaining bytes that couldnt be decoded
+            // and the decode buffer starting at + remaining_size 
+            decode_base64_buffer(cmd, ctx, ctx->des.buffer.in, &ctx->des.buffer.bytes_read, &size);
         }
-        
+
         printf("bytes_read: %ld\n", ctx->des.buffer.bytes_read);
         printf("size: %ld\n", size);
 
@@ -48,6 +48,8 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
         if ((ctx->des.buffer.out_pos + 8) >= BASE64_BUFFER_SIZE)
             write_des_output(cmd, ctx);
 
+        // Make sure it use the correct size as well as a multiple of 8
+        // put the remaining bytes in the buffer in for next read
         for (int i = 0; i < ctx->des.buffer.bytes_read; i += 8)
         {
             uint8_t block[8];
@@ -65,7 +67,7 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
     }
 
     if (!ctx->des.decrypt_mode && ((ctx->des.buffer.total_bytes_read % 8) == 0))
-        add_padding_block(ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
+        add_padding(ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
 
     if (ctx->des.decrypt_mode)
         remove_padding(cmd, ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);

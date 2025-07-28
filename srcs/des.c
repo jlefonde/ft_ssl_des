@@ -251,13 +251,17 @@ static void assign_derived_key(const t_command *cmd, t_context *ctx, uint8_t **d
     ft_memcpy(*dest, dk, n);
 }
 
-uint8_t *decode_base64_buffer(const t_command *cmd, uint8_t *buffer, ssize_t bytes_read, size_t *decoded_size)
+uint8_t *decode_base64_buffer(const t_command *cmd, t_context *ctx, uint8_t *buffer, size_t *buffer_size, size_t *decoded_size)
 {
-    uint8_t *decoded_buffer = decode_base64_flag(cmd, buffer, bytes_read, decoded_size);
+    // skip whitespaces 
+    // only decode multiple of 4
+    // send remaining bytes to start of buffer
+    uint8_t *decoded_buffer = decode_base64_flag(cmd, buffer, buffer_size, decoded_size);
     if (!decoded_buffer)
-        return (NULL);
+        fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
 
-    free(buffer);
+    // fill the buffer after the remaining bytes with the decoded_buffer so that:
+    // buffer + remaining = decoded_buffer
     return (decoded_buffer);
 }
 
@@ -425,7 +429,7 @@ void pkcs7(uint8_t *block, ssize_t remaining_bytes)
     }
 }
 
-void add_padding_block(t_context *ctx, uint8_t *out_buffer, size_t *out_pos)
+void add_padding(t_context *ctx, uint8_t *out_buffer, size_t *out_pos)
 {
     uint8_t block[8];
 
