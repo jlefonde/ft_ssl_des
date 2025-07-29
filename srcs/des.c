@@ -251,18 +251,29 @@ static void assign_derived_key(const t_command *cmd, t_context *ctx, uint8_t **d
     ft_memcpy(*dest, dk, n);
 }
 
-uint8_t *decode_base64_buffer(const t_command *cmd, t_context *ctx, uint8_t *buffer, size_t *buffer_size, size_t *decoded_size)
+uint8_t *decode_base64_buffer(const t_command *cmd, t_context *ctx, uint8_t *buffer, size_t buffer_size, size_t *decoded_size, bool is_last_chunk)
 {
-    // skip whitespaces 
-    // only decode multiple of 4
-    // send remaining bytes to start of buffer
-    uint8_t *decoded_buffer = decode_base64_flag(cmd, buffer, buffer_size, decoded_size);
-    if (!decoded_buffer)
-        fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
+    size_t compact_size = 0;
+    for (int i = 0; i < buffer_size; i++)
+    {
+        if(!ft_isspace(buffer[i]))
+            buffer[compact_size++] = buffer[i];
+    }
 
-    // fill the buffer after the remaining bytes with the decoded_buffer so that:
-    // buffer + remaining = decoded_buffer
-    return (decoded_buffer);
+    if (is_last_chunk)
+        return decode_base64_flag(cmd, buffer, compact_size, decoded_size);
+    
+    size_t complete_groups = compact_size / 4;
+    size_t aligned_size = complete_groups * 4;
+    size_t remainder_size = compact_size - aligned_size;
+
+    if (remainder_size > 0)
+    {
+        ft_memcpy(ctx->des.b64_remainder, buffer + aligned_size, remainder_size);
+        ctx->des.b64_remainder_size = remainder_size;
+    }
+
+    return decode_base64_flag(cmd, buffer, aligned_size, decoded_size);
 }
 
 static uint8_t *read_salt(const t_command *cmd, t_context *ctx)
@@ -281,12 +292,9 @@ static uint8_t *read_salt(const t_command *cmd, t_context *ctx)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
 
     size_t header_size = bytes_read;
-    if (ctx->des.base64_mode)
-    {
-        salted_header = decode_base64_buffer(cmd, salted_header, bytes_read, &header_size);
-        if (!salted_header)
-            fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
-    }
+    // TODO: loop until exactly 24 bytes to decode after skipping whitespaces
+    // if (ctx->des.base64_mode)
+    //     salted_header = decode_base64_buffer(cmd, ctx, salted_header, bytes_read, &header_size);
 
     if (ft_memcmp(salted_header, "Salted__", 8) != 0)
         fatal_error(ctx, cmd->name, "Bad magic number", NULL, clear_des_ctx);
@@ -301,8 +309,8 @@ static uint8_t *read_salt(const t_command *cmd, t_context *ctx)
     size_t remaining = header_size - 16;
     if (remaining > 0)
     {
-        ft_memcpy(ctx->des.remainder, salted_header + 16, remaining);
-        ctx->des.remainder_size = remaining;
+        ft_memcpy(ctx->des.b64_remainder, salted_header + 16, remaining);
+        ctx->des.b64_remainder_size = remaining;
     }
 
     return (ft_memcpy(salt, salted_header + 8, 8));
@@ -517,7 +525,8 @@ t_context *parse_des(const t_command *cmd, int argc, char **argv)
     ctx->des.buffer.total_bytes_read = 0;
     ctx->des.buffer.out_pos = 0;
     ctx->des.total_cipher_size = 0;
-    ctx->des.remainder_size = 0;
+    ctx->des.b64_remainder_size = 0;
+    ctx->des.des_remainder_size = 0;
 
     char *in_file = NULL;
     char *out_file = NULL;

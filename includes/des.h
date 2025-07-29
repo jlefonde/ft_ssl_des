@@ -8,6 +8,7 @@
 # define DES_KEY_LEN 8
 # define DES_IV_LEN 8
 # define DES_PBKDF_ITR 10000
+# define DES_BUFFER_SIZE 3072
 
 typedef struct s_command t_command;
 typedef union u_context t_context;
@@ -16,7 +17,7 @@ void process_des_cbc(const t_command *cmd, int argc, char **argv);
 void process_des_ecb(const t_command *cmd, int argc, char **argv);
 
 int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required);
-uint8_t *decode_base64_buffer(const t_command *cmd, uint8_t *buffer, size_t *buffer_size, size_t *decoded_size);
+uint8_t *decode_base64_buffer(const t_command *cmd, t_context *ctx, uint8_t *buffer, size_t buffer_size, size_t *decoded_size, bool is_last_chunk);
 void prepend_salt_to_output(t_context *ctx);
 void append_cipher_to_output(uint64_t cipher, uint8_t *buffer, size_t *buffer_pos);
 void pkcs7(uint8_t *block, ssize_t remaining_bytes);

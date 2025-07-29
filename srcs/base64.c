@@ -277,9 +277,6 @@ uint8_t *decode_base64_flag(const t_command *cmd, uint8_t *input, size_t n, size
 
     for (int i = 0; i < n; i++)
     {
-        if (ft_isspace(input[i]))
-            continue;
-
         bytes[byte_count] = get_base64_char_index(input[i], &npad);
         if (bytes[byte_count] >= 64
             || (npad > 0 && input[i] != '=')

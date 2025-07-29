@@ -79,7 +79,7 @@ void process_des_cbc(const t_command *cmd, int argc, char **argv)
     }
 
     if (!ctx->des.decrypt_mode && ((ctx->des.buffer.total_bytes_read % 8) == 0))
-        add_padding_block(ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
+        add_padding(ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
 
     if (ctx->des.decrypt_mode)
         remove_padding(cmd, ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
