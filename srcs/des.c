@@ -253,19 +253,19 @@ static void assign_derived_key(const t_command *cmd, t_context *ctx, uint8_t **d
 
 uint8_t *decode_base64_buffer(const t_command *cmd, t_context *ctx, uint8_t *buffer, size_t buffer_size, size_t *decoded_size, bool is_last_chunk)
 {
-    size_t compact_size = 0;
+    size_t filtered_size = 0;
     for (int i = 0; i < buffer_size; i++)
     {
         if(!ft_isspace(buffer[i]))
-            buffer[compact_size++] = buffer[i];
+            buffer[filtered_size++] = buffer[i];
     }
 
     if (is_last_chunk)
-        return decode_base64_flag(cmd, buffer, compact_size, decoded_size);
+        return decode_base64_flag(cmd, buffer, filtered_size, decoded_size);
     
-    size_t complete_groups = compact_size / 4;
+    size_t complete_groups = filtered_size / 4;
     size_t aligned_size = complete_groups * 4;
-    size_t remainder_size = compact_size - aligned_size;
+    size_t remainder_size = filtered_size - aligned_size;
 
     if (remainder_size > 0)
     {
