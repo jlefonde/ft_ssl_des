@@ -293,8 +293,8 @@ static uint8_t *read_salt(const t_command *cmd, t_context *ctx)
 
     size_t header_size = bytes_read;
     // TODO: loop until exactly 24 bytes to decode after skipping whitespaces
-    // if (ctx->des.base64_mode)
-    //     salted_header = decode_base64_buffer(cmd, ctx, salted_header, bytes_read, &header_size);
+    if (ctx->des.base64_mode)
+        salted_header = decode_base64_buffer(cmd, ctx, salted_header, bytes_read, &header_size, true);
 
     if (ft_memcmp(salted_header, "Salted__", 8) != 0)
         fatal_error(ctx, cmd->name, "Bad magic number", NULL, clear_des_ctx);
@@ -356,11 +356,11 @@ static uint64_t *key_scheduler(uint64_t key)
 
 int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required)
 {
-    ctx->des.buffer.in = malloc(BASE64_BUFFER_SIZE);
+    ctx->des.buffer.in = malloc(DES_BUFFER_SIZE);
     if (!ctx->des.buffer.in)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
 
-    ctx->des.buffer.out = malloc(BASE64_BUFFER_SIZE * 2);
+    ctx->des.buffer.out = malloc(DES_BUFFER_SIZE * 2);
     if (!ctx->des.buffer.out)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
 
@@ -415,17 +415,23 @@ int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required)
     return (1);
 }
 
-void prepend_salt_to_output(t_context *ctx)
+void prepend_salt_to_output(t_context *ctx, uint8_t *buffer, size_t *buffer_pos)
 {
-    write(ctx->des.out_fd, "Salted__", 8);
-    write(ctx->des.out_fd, ctx->des.salt, 8);
+    char magic_number_str[9] = "Salted__";
+    ft_memcpy(buffer + *buffer_pos, magic_number_str, 8);
+    (*buffer_pos) += 8;
+
+    ft_memcpy(buffer + *buffer_pos, ctx->des.salt, 8);
+    (*buffer_pos) += 8;
+
     ctx->des.prepend_salt = false;
 }
 
-void append_cipher_to_output(uint64_t cipher, uint8_t *buffer, size_t *buffer_pos)
+void append_cipher_to_output(t_context *ctx, uint64_t cipher, uint8_t *buffer, size_t *buffer_pos)
 {
     for (int i = 0; i < 8; i++)
         buffer[(*buffer_pos)++] = (cipher >> (56 - (i * 8))) & 0xFF;
+    ctx->des.total_cipher_size += 8;
 }
 
 void pkcs7(uint8_t *block, ssize_t remaining_bytes)
@@ -442,42 +448,25 @@ void add_padding(t_context *ctx, uint8_t *out_buffer, size_t *out_pos)
     uint8_t block[8];
 
     if (ctx->des.prepend_salt)
-        prepend_salt_to_output(ctx);
+        prepend_salt_to_output(ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
 
     pkcs7(block, 0);
 
     uint64_t cipher = des(bytes_to_uint64(block), ctx->des.subkeys, ctx->des.decrypt_mode);
-    append_cipher_to_output(cipher, out_buffer, out_pos);
+    append_cipher_to_output(ctx, cipher, out_buffer, out_pos);
 }
 
 void remove_padding(const t_command *cmd, t_context *ctx, uint8_t *out_buffer, size_t *out_pos)
 {
-    // for (size_t i = 1; i <= *out_pos; i++)
-    // {
-    //     printf("%02x ", out_buffer[i - 1]);
-    //     if (i % 8 == 0)
-    //         printf(" ");
-    //     if (i % 16 == 0)
-    //         printf("\n");
-    // }
-    // printf("\n");
-
-    fflush(0);
     uint8_t last_byte = out_buffer[*out_pos - 1];
 
-    printf("Total buffer size: %zu\n", *out_pos);
-    printf("Last few bytes: ");
-    for (int i = 1; i <= 16 && i <= *out_pos; i++) {
-        printf("%02x ", out_buffer[*out_pos - i]);
-    }
-    printf("\n");
     if (last_byte < 1 || last_byte > 8)
-        fatal_error(ctx, cmd->name, "Corrupted data1", NULL, clear_des_ctx);
+        fatal_error(ctx, cmd->name, "Corrupted data", NULL, clear_des_ctx);
 
     for (size_t i = *out_pos - last_byte; i < *out_pos; i++)
     {
         if (out_buffer[i] != last_byte)
-            fatal_error(ctx, cmd->name, "Corrupted data2", NULL, clear_des_ctx);
+            fatal_error(ctx, cmd->name, "Corrupted data", NULL, clear_des_ctx);
     }
 
     *out_pos -= last_byte;

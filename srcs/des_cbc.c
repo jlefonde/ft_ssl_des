@@ -26,7 +26,7 @@ void process_des_cbc(const t_command *cmd, int argc, char **argv)
         ctx->des.buffer.total_bytes_read += ctx->des.buffer.bytes_read;
 
         if (!ctx->des.decrypt_mode && ctx->des.prepend_salt)
-            prepend_salt_to_output(ctx);
+            prepend_salt_to_output(ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
 
         if ((ctx->des.buffer.out_pos + 8) >= BASE64_BUFFER_SIZE)
             write_des_output(cmd, ctx);
@@ -49,7 +49,7 @@ void process_des_cbc(const t_command *cmd, int argc, char **argv)
                 }
 
                 cipher = des(bytes_to_uint64(block), ctx->des.subkeys, ctx->des.decrypt_mode);
-                append_cipher_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
+                append_cipher_to_output(ctx, cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
             }
             else
             {
@@ -66,7 +66,7 @@ void process_des_cbc(const t_command *cmd, int argc, char **argv)
                 }
 
                 cipher = current_cipher;
-                append_cipher_to_output(bytes_to_uint64(block), ctx->des.buffer.out, &ctx->des.buffer.out_pos);
+                append_cipher_to_output(ctx, bytes_to_uint64(block), ctx->des.buffer.out, &ctx->des.buffer.out_pos);
             }
 
             first_block = false;

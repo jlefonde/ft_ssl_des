@@ -18,8 +18,8 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv);
 
 int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required);
 uint8_t *decode_base64_buffer(const t_command *cmd, t_context *ctx, uint8_t *buffer, size_t buffer_size, size_t *decoded_size, bool is_last_chunk);
-void prepend_salt_to_output(t_context *ctx);
-void append_cipher_to_output(uint64_t cipher, uint8_t *buffer, size_t *buffer_pos);
+void prepend_salt_to_output(t_context *ctx, uint8_t *buffer, size_t *buffer_pos);
+void append_cipher_to_output(t_context *ctx, uint64_t cipher, uint8_t *buffer, size_t *buffer_pos);
 void pkcs7(uint8_t *block, ssize_t remaining_bytes);
 void add_padding(t_context *ctx, uint8_t *out_buffer, size_t *out_pos);
 void remove_padding(const t_command *cmd, t_context *ctx, uint8_t *out_buffer, size_t *out_pos);

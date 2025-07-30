@@ -11,26 +11,29 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
     }
 
     // DEBUG
-    // if (ctx->des.decrypt_mode)
-    // {
-    //     printf("SALT: ");
-    //     for (int i = 0; i < 8; i++)
-    //         printf("%02x ", ctx->des.salt[i]);
-    //     printf("\n");
+    if (ctx->des.decrypt_mode)
+    {
+        if (ctx->des.salt)
+        {
+            printf("SALT: ");
+            for (int i = 0; i < 8; i++)
+                printf("%02x ", ctx->des.salt[i]);
+            printf("\n");
+        }
 
-    //     printf("remainder_size: %ld\n", ctx->des.b64_remainder_size);
-    //     printf("remainder: ");
-    //     for (int i = 0; i < ctx->des.b64_remainder_size; i++)
-    //         printf("%02x ", ctx->des.b64_remainder[i]);
-    //     printf("\n");
-    // }
+        printf("remainder_size: %ld\n", ctx->des.b64_remainder_size);
+        printf("remainder: ");
+        for (int i = 0; i < ctx->des.b64_remainder_size; i++)
+            printf("%02x ", ctx->des.b64_remainder[i]);
+        printf("\n");
+    }
     // END DEBUG
 
-    // TODO: handle b64 encoding so might instead to store it in buffer_out and update out_pos
-    // if (!ctx->des.decrypt_mode && ctx->des.prepend_salt)
-    //     prepend_salt_to_output(ctx);
+    if (!ctx->des.decrypt_mode && ctx->des.prepend_salt)
+        prepend_salt_to_output(ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
 
-    while (true)
+    bool is_last_chunk = false;
+    while (!is_last_chunk)
     {
         if ((ctx->des.buffer.out_pos + 8) >= DES_BUFFER_SIZE)
             write_des_output(cmd, ctx);
@@ -48,8 +51,8 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
         if (ctx->des.buffer.bytes_read == -1)
             fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
 
-        bool is_last_chunk = ctx->des.buffer.bytes_read < (DES_BUFFER_SIZE - b64_offset);
-        
+        is_last_chunk = ctx->des.buffer.bytes_read < (DES_BUFFER_SIZE - b64_offset);
+
         uint8_t input_buffer[DES_BUFFER_SIZE + 7];
         size_t input_buffer_size = 0;
         size_t des_offset = 0;
@@ -81,14 +84,18 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
             input_buffer_size += ctx->des.buffer.bytes_read;
         }
 
-        size_t complete_groups = input_buffer_size / 8;
-        size_t aligned_size = input_buffer_size * 8;
-        size_t remainder_size = input_buffer_size - aligned_size;
-
-        if (remainder_size > 0)
+        size_t aligned_size = input_buffer_size;
+        if (!is_last_chunk)
         {
-            ft_memcpy(ctx->des.des_remainder, input_buffer + aligned_size, remainder_size);
-            ctx->des.des_remainder_size = remainder_size;
+            size_t complete_groups = input_buffer_size / 8;
+            aligned_size = complete_groups * 8;
+            size_t remainder_size = input_buffer_size - aligned_size;
+
+            if (remainder_size > 0)
+            {
+                ft_memcpy(ctx->des.des_remainder, input_buffer + aligned_size, remainder_size);
+                ctx->des.des_remainder_size = remainder_size;
+            }
         }
 
         for (int i = 0; i < aligned_size; i += 8)
@@ -100,22 +107,18 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
                 pkcs7(block, aligned_size - i);
 
             uint64_t cipher = des(bytes_to_uint64(block), ctx->des.subkeys, ctx->des.decrypt_mode);
-            append_cipher_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
+            append_cipher_to_output(ctx, cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
         }
-
-        if (is_last_chunk && !ctx->des.b64_remainder_size && !ctx->des.des_remainder_size)
-            break;
     }
 
-    // TODO: should use total cipher size
-    // if (!ctx->des.decrypt_mode && ((ctx->des.buffer.total_bytes_read % 8) == 0))
-    //     add_padding(ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
+    if (!ctx->des.decrypt_mode && ((ctx->des.total_cipher_size % 8) == 0))
+        add_padding(ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
 
-    // if (ctx->des.decrypt_mode)
-    //     remove_padding(cmd, ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
+    if (ctx->des.decrypt_mode)
+        remove_padding(cmd, ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
 
-    // if (ctx->des.buffer.out_pos > 0)
-    //     write_des_output(cmd, ctx);
+    if (ctx->des.buffer.out_pos > 0)
+        write_des_output(cmd, ctx);
 
     clear_des_ctx(ctx);
 }
