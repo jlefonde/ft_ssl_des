@@ -19,13 +19,13 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
             for (int i = 0; i < 8; i++)
                 printf("%02x ", ctx->des.salt[i]);
             printf("\n");
-        }
 
-        printf("remainder_size: %ld\n", ctx->des.b64_remainder_size);
-        printf("remainder: ");
-        for (int i = 0; i < ctx->des.b64_remainder_size; i++)
-            printf("%02x ", ctx->des.b64_remainder[i]);
-        printf("\n");
+            printf("des_remainder_size: %ld\n", ctx->des.des_remainder_size);
+            printf("des_remainder: ");
+            for (int i = 0; i < ctx->des.des_remainder_size; i++)
+                printf("%02x ", ctx->des.des_remainder[i]);
+            printf("\n");
+        }
     }
     // END DEBUG
 
@@ -84,6 +84,7 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
             input_buffer_size += ctx->des.buffer.bytes_read;
         }
 
+        ctx->des.total_input_size += input_buffer_size;
         size_t aligned_size = input_buffer_size;
         if (!is_last_chunk)
         {
@@ -107,12 +108,12 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
                 pkcs7(block, aligned_size - i);
 
             uint64_t cipher = des(bytes_to_uint64(block), ctx->des.subkeys, ctx->des.decrypt_mode);
-            append_cipher_to_output(ctx, cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
+            append_cipher_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
         }
     }
 
-    if (!ctx->des.decrypt_mode && ((ctx->des.total_cipher_size % 8) == 0))
-        add_padding(ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
+    if (!ctx->des.decrypt_mode && ((ctx->des.total_input_size % 8) == 0))
+        add_full_padding_block(ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
 
     if (ctx->des.decrypt_mode)
         remove_padding(cmd, ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);

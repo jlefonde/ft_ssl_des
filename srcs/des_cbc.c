@@ -49,7 +49,7 @@ void process_des_cbc(const t_command *cmd, int argc, char **argv)
                 }
 
                 cipher = des(bytes_to_uint64(block), ctx->des.subkeys, ctx->des.decrypt_mode);
-                append_cipher_to_output(ctx, cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
+                append_cipher_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
             }
             else
             {
@@ -66,7 +66,7 @@ void process_des_cbc(const t_command *cmd, int argc, char **argv)
                 }
 
                 cipher = current_cipher;
-                append_cipher_to_output(ctx, bytes_to_uint64(block), ctx->des.buffer.out, &ctx->des.buffer.out_pos);
+                append_cipher_to_output(bytes_to_uint64(block), ctx->des.buffer.out, &ctx->des.buffer.out_pos);
             }
 
             first_block = false;
@@ -79,7 +79,7 @@ void process_des_cbc(const t_command *cmd, int argc, char **argv)
     }
 
     if (!ctx->des.decrypt_mode && ((ctx->des.buffer.total_bytes_read % 8) == 0))
-        add_padding(ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
+        add_full_padding_block(ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
 
     if (ctx->des.decrypt_mode)
         remove_padding(cmd, ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);

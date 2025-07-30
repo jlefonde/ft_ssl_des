@@ -309,8 +309,8 @@ static uint8_t *read_salt(const t_command *cmd, t_context *ctx)
     size_t remaining = header_size - 16;
     if (remaining > 0)
     {
-        ft_memcpy(ctx->des.b64_remainder, salted_header + 16, remaining);
-        ctx->des.b64_remainder_size = remaining;
+        ft_memcpy(ctx->des.des_remainder, salted_header + 16, remaining);
+        ctx->des.des_remainder_size = remaining;
     }
 
     return (ft_memcpy(salt, salted_header + 8, 8));
@@ -427,11 +427,10 @@ void prepend_salt_to_output(t_context *ctx, uint8_t *buffer, size_t *buffer_pos)
     ctx->des.prepend_salt = false;
 }
 
-void append_cipher_to_output(t_context *ctx, uint64_t cipher, uint8_t *buffer, size_t *buffer_pos)
+void append_cipher_to_output(uint64_t cipher, uint8_t *buffer, size_t *buffer_pos)
 {
     for (int i = 0; i < 8; i++)
         buffer[(*buffer_pos)++] = (cipher >> (56 - (i * 8))) & 0xFF;
-    ctx->des.total_cipher_size += 8;
 }
 
 void pkcs7(uint8_t *block, ssize_t remaining_bytes)
@@ -443,17 +442,14 @@ void pkcs7(uint8_t *block, ssize_t remaining_bytes)
     }
 }
 
-void add_padding(t_context *ctx, uint8_t *out_buffer, size_t *out_pos)
+void add_full_padding_block(t_context *ctx, uint8_t *out_buffer, size_t *out_pos)
 {
     uint8_t block[8];
-
-    if (ctx->des.prepend_salt)
-        prepend_salt_to_output(ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
 
     pkcs7(block, 0);
 
     uint64_t cipher = des(bytes_to_uint64(block), ctx->des.subkeys, ctx->des.decrypt_mode);
-    append_cipher_to_output(ctx, cipher, out_buffer, out_pos);
+    append_cipher_to_output(cipher, out_buffer, out_pos);
 }
 
 void remove_padding(const t_command *cmd, t_context *ctx, uint8_t *out_buffer, size_t *out_pos)
@@ -513,7 +509,7 @@ t_context *parse_des(const t_command *cmd, int argc, char **argv)
     ctx->des.buffer.bytes_read = 0;
     ctx->des.buffer.total_bytes_read = 0;
     ctx->des.buffer.out_pos = 0;
-    ctx->des.total_cipher_size = 0;
+    ctx->des.total_input_size = 0;
     ctx->des.b64_remainder_size = 0;
     ctx->des.des_remainder_size = 0;
 
