@@ -6,10 +6,10 @@ iv=A4B7397EACE23C39
 pass=verysecure
 
 declare -g files=( "0B" "1B" "2B" "3B" "4B" "32B" "64B" "1KB" "4KB" "64KB" "1MB" )
-declare -g commands=( "des-ecb" )
+declare -g commands=( "des-ecb" "des-cbc" )
 
 ft_ssl_flags=(
-    "-k $key"
+    "-k $key -v $iv"
     "-p $pass -s $salt -a"
     "-k $key -v $iv -a"
     "-p $pass -s $salt -v $iv -a"

@@ -234,7 +234,10 @@ static char *ask_password(const t_command *cmd, t_context *ctx, bool skip_verify
         fatal_error(ctx, cmd->name, "Password exceeds max length", NULL, clear_des_ctx);
     }
     else if (!password_len)
+    {
+        free(password);        
         fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
+    }
 
     return (password);
 }
