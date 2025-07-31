@@ -212,20 +212,23 @@ static char *ask_password(const t_command *cmd, t_context *ctx, bool skip_verify
     {
         char password_verify[PASSWORD_MAX_LEN + 2];
         ft_printf("Verifying - enter %s encryption password: ", cmd_name);
-        free(cmd_name);
 
         if (!readpassphrase("", password_verify, PASSWORD_MAX_LEN + 2, RPP_REQUIRE_TTY))
         {
             free(password);
+            free(cmd_name);
             fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
         }
 
         if (ft_strcmp(password, password_verify) != 0)
         {
             free(password);
+            free(cmd_name);
             fatal_error(ctx, cmd->name, "Password mismatch", NULL, clear_des_ctx);
         }
     }
+
+    free(cmd_name);
 
     size_t password_len = ft_strlen(password);
     if (password_len > PASSWORD_MAX_LEN)
@@ -265,7 +268,7 @@ uint8_t *decode_base64_buffer(const t_command *cmd, t_context *ctx, uint8_t *buf
 
     if (is_last_chunk)
         return decode_base64_flag(cmd, buffer, filtered_size, decoded_size);
-    
+
     size_t complete_groups = filtered_size / 4;
     size_t aligned_size = complete_groups * 4;
     size_t remainder_size = filtered_size - aligned_size;
@@ -310,7 +313,7 @@ static void read_salt(const t_command *cmd, t_context *ctx)
             uint8_t *decoded_buffer = decode_base64_buffer(cmd, ctx, b64_buffer, bytes_read + b64_offset, &decoded_size, 
                 is_last_chunk);
             if (!decoded_buffer)
-                fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
+                fatal_error(ctx, "COULDNT DECODE BASE64 BUFFER", NULL, NULL, clear_des_ctx);
     
             size_t bytes_to_copy = (decoded_size <= 16 - salted_header_size) ? decoded_size : 16 - salted_header_size;
             
@@ -325,6 +328,8 @@ static void read_salt(const t_command *cmd, t_context *ctx)
                 ft_memcpy(ctx->des.des_remainder, decoded_buffer + bytes_to_copy, decoded_size - bytes_to_copy);
                 ctx->des.des_remainder_size = decoded_size - bytes_to_copy;
             }
+
+            free(decoded_buffer);
         }
     }
     else
