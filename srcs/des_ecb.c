@@ -35,7 +35,7 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
     bool is_last_chunk = false;
     while (!is_last_chunk)
     {
-        if ((ctx->des.buffer.out_pos + 8) >= DES_BUFFER_SIZE)
+        if ((ctx->des.buffer.out_pos + 8) >= DES_BUFFER_SIZE * 2)
             write_des_output(cmd, ctx);
 
         size_t b64_offset = 0;

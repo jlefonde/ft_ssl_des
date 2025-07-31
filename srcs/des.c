@@ -276,7 +276,7 @@ uint8_t *decode_base64_buffer(const t_command *cmd, t_context *ctx, uint8_t *buf
     return decode_base64_flag(cmd, buffer, aligned_size, decoded_size);
 }
 
-static uint8_t *read_salt(const t_command *cmd, t_context *ctx)
+static void read_salt(const t_command *cmd, t_context *ctx)
 {
     uint8_t *salted_header; 
     size_t buffer_size;
@@ -294,17 +294,28 @@ static uint8_t *read_salt(const t_command *cmd, t_context *ctx)
     size_t header_size = bytes_read;
     // TODO: loop until exactly 24 bytes to decode after skipping whitespaces
     if (ctx->des.base64_mode)
+    {
         salted_header = decode_base64_buffer(cmd, ctx, salted_header, bytes_read, &header_size, true);
+    }
 
     if (ft_memcmp(salted_header, "Salted__", 8) != 0)
+    {
+        free(salted_header);
         fatal_error(ctx, cmd->name, "Bad magic number", NULL, clear_des_ctx);
+    }
 
     if (header_size < 16)
+    {
+        free(salted_header);
         fatal_error(ctx, cmd->name, "Error reading input file", NULL, clear_des_ctx);
+    }
 
-    uint8_t *salt = malloc(8);
-    if (!salt)
+    ctx->des.salt = malloc(8);
+    if (!ctx->des.salt)
+    {
+        free(salted_header);
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
+    }
     
     size_t remaining = header_size - 16;
     if (remaining > 0)
@@ -313,7 +324,8 @@ static uint8_t *read_salt(const t_command *cmd, t_context *ctx)
         ctx->des.des_remainder_size = remaining;
     }
 
-    return (ft_memcpy(salt, salted_header + 8, 8));
+    ft_memcpy(ctx->des.salt, salted_header + 8, 8);
+    free(salted_header);
 }
 
 static uint64_t permute(uint64_t block, size_t block_size, const size_t *p_arr, size_t out_size)
@@ -381,7 +393,7 @@ int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required)
     }
 
     if (ctx->des.decrypt_mode && ctx->des.prepend_salt)
-        ctx->des.salt = read_salt(cmd, ctx);
+        read_salt(cmd, ctx);
 
     if (iv_required && !ctx->des.iv && !ctx->des.password && ctx->des.key)
         fatal_error(ctx, cmd->name, "iv undefined", NULL, clear_des_ctx);
