@@ -90,7 +90,7 @@ typedef union u_context
         t_buffer    buffer;
         uint8_t     b64_remainder[3];
         size_t      b64_remainder_size;
-        uint8_t     des_remainder[7];
+        uint8_t     des_remainder[16];
         size_t      des_remainder_size;
         size_t      total_input_size;
     }   des;

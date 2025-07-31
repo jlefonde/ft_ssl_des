@@ -278,54 +278,72 @@ uint8_t *decode_base64_buffer(const t_command *cmd, t_context *ctx, uint8_t *buf
 
 static void read_salt(const t_command *cmd, t_context *ctx)
 {
-    uint8_t *salted_header; 
-    size_t buffer_size;
+    uint8_t salted_header[16];
+    size_t salted_header_size = 0;
+    ssize_t bytes_read = 0;
 
-    buffer_size = ctx->des.base64_mode ? 24 : 16;
-
-    salted_header = malloc(buffer_size);
-    if (!salted_header)
-        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);        
-    
-    ssize_t bytes_read = read(ctx->des.in.fd, salted_header, buffer_size);
-    if (bytes_read == -1)
-        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
-
-    size_t header_size = bytes_read;
-    // TODO: loop until exactly 24 bytes to decode after skipping whitespaces
     if (ctx->des.base64_mode)
     {
-        salted_header = decode_base64_buffer(cmd, ctx, salted_header, bytes_read, &header_size, true);
+        uint8_t b64_buffer[24];
+
+        bool is_last_chunk = false;
+        while (!is_last_chunk && salted_header_size < 16)
+        {
+            size_t b64_offset = 0;
+            if (ctx->des.b64_remainder_size > 0)
+            {
+                ft_memcpy(b64_buffer, ctx->des.b64_remainder, ctx->des.b64_remainder_size);
+                b64_offset = ctx->des.b64_remainder_size;
+                ctx->des.b64_remainder_size = 0;
+            }
+
+            bytes_read = read_from_input(&ctx->des.in, b64_buffer + b64_offset, 24 - b64_offset);
+            if (bytes_read == -1)
+                fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
+
+            is_last_chunk = bytes_read < (24 - b64_offset);
+
+            size_t decoded_size = 0;
+            uint8_t *decoded_buffer = decode_base64_buffer(cmd, ctx, b64_buffer, bytes_read + b64_offset, &decoded_size, 
+                is_last_chunk);
+            if (!decoded_buffer)
+                fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
+    
+            size_t bytes_to_copy = (decoded_size <= 16 - salted_header_size) ? decoded_size : 16 - salted_header_size;
+            
+            if (bytes_to_copy > 0) 
+            {
+                ft_memcpy(salted_header + salted_header_size, decoded_buffer, bytes_to_copy);
+                salted_header_size += bytes_to_copy;
+            }
+    
+            if (decoded_size > bytes_to_copy)
+            {
+                ft_memcpy(ctx->des.des_remainder, decoded_buffer + bytes_to_copy, decoded_size - bytes_to_copy);
+                ctx->des.des_remainder_size = decoded_size - bytes_to_copy;
+            }
+        }
+    }
+    else
+    {
+        bytes_read = read_from_input(&ctx->des.in, salted_header, 16);
+        if (bytes_read == -1)
+            fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
+
+        salted_header_size = bytes_read;
     }
 
     if (ft_memcmp(salted_header, "Salted__", 8) != 0)
-    {
-        free(salted_header);
         fatal_error(ctx, cmd->name, "Bad magic number", NULL, clear_des_ctx);
-    }
 
-    if (header_size < 16)
-    {
-        free(salted_header);
+    if (salted_header_size < 16)
         fatal_error(ctx, cmd->name, "Error reading input file", NULL, clear_des_ctx);
-    }
 
     ctx->des.salt = malloc(8);
     if (!ctx->des.salt)
-    {
-        free(salted_header);
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
-    }
-    
-    size_t remaining = header_size - 16;
-    if (remaining > 0)
-    {
-        ft_memcpy(ctx->des.des_remainder, salted_header + 16, remaining);
-        ctx->des.des_remainder_size = remaining;
-    }
 
     ft_memcpy(ctx->des.salt, salted_header + 8, 8);
-    free(salted_header);
 }
 
 static uint64_t permute(uint64_t block, size_t block_size, const size_t *p_arr, size_t out_size)

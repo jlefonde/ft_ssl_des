@@ -10,25 +10,6 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
         return;
     }
 
-    // DEBUG
-    if (ctx->des.decrypt_mode)
-    {
-        if (ctx->des.salt)
-        {
-            printf("SALT: ");
-            for (int i = 0; i < 8; i++)
-                printf("%02x ", ctx->des.salt[i]);
-            printf("\n");
-
-            printf("des_remainder_size: %ld\n", ctx->des.des_remainder_size);
-            printf("des_remainder: ");
-            for (int i = 0; i < ctx->des.des_remainder_size; i++)
-                printf("%02x ", ctx->des.des_remainder[i]);
-            printf("\n");
-        }
-    }
-    // END DEBUG
-
     if (!ctx->des.decrypt_mode && ctx->des.prepend_salt)
         prepend_salt_to_output(ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
 
