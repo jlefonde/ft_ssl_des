@@ -14,7 +14,6 @@ void process_des_ofb(const t_command *cmd, int argc, char **argv)
         prepend_salt_to_output(ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
 
     bool is_first_block = true;
-    uint64_t cipher;
     bool is_last_chunk = false;
     while (!is_last_chunk)
     {
@@ -83,7 +82,6 @@ void process_des_ofb(const t_command *cmd, int argc, char **argv)
         }
 
         uint64_t previous_cipher;
-        uint64_t previous_input_cipher;
         for (int i = 0; i < aligned_size; i += 8)
         {
             uint64_t block;
@@ -92,32 +90,15 @@ void process_des_ofb(const t_command *cmd, int argc, char **argv)
             if (is_last_chunk && (i + 8 > input_buffer_size))
                 bytes_to_write = input_buffer_size - i;
 
-            if (!ctx->des.decrypt_mode)
-            {
-                if (is_first_block)
-                    block = bytes_to_uint64(ctx->des.iv);
-                else
-                    block = previous_cipher;
-
-                cipher = des(block, ctx->des.subkeys, ctx->des.decrypt_mode);
-                previous_cipher = cipher;
-                uint64_t ciphertext = cipher ^ bytes_to_uint64(input_buffer + i);
-                append_cipher_to_output_len(ciphertext, ctx->des.buffer.out, &ctx->des.buffer.out_pos, 
-                    bytes_to_write);
-            }
+            if (is_first_block)
+                block = bytes_to_uint64(ctx->des.iv);
             else
-            {
-                if (is_first_block)
-                    block = bytes_to_uint64(ctx->des.iv);
-                else
-                    block = previous_input_cipher;
+                block = previous_cipher;
 
-                cipher = des(block, ctx->des.subkeys, false);
-                previous_input_cipher = bytes_to_uint64(input_buffer + i);
-                uint64_t plain = cipher ^ previous_input_cipher;
-
-                append_cipher_to_output_len(plain, ctx->des.buffer.out, &ctx->des.buffer.out_pos, bytes_to_write);
-            }
+            uint64_t cipher = des(block, ctx->des.subkeys, false);
+            previous_cipher = cipher;
+            uint64_t plain = cipher ^ bytes_to_uint64(input_buffer + i);
+            append_cipher_to_output_len(plain, ctx->des.buffer.out, &ctx->des.buffer.out_pos, bytes_to_write);
 
             is_first_block = false;
         }
