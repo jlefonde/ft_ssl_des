@@ -18,27 +18,9 @@ void process_des_cfb(const t_command *cmd, int argc, char **argv)
     bool is_last_chunk = false;
     while (!is_last_chunk)
     {
-        if ((ctx->des.buffer.out_pos + 8) >= DES_BUFFER_SIZE)
-            write_des_output(cmd, ctx);
-
-        handle_remainder(ctx->des.buffer.in, NULL, ctx->des.b64_remainder, &ctx->des.b64_remainder_size,
-            &ctx->des.b64_offset);
-
-        ctx->des.buffer.bytes_read = read_from_input(&ctx->des.in, ctx->des.buffer.in + ctx->des.b64_offset,
-            DES_BUFFER_SIZE - ctx->des.b64_offset);
-        if (ctx->des.buffer.bytes_read == -1)
-            fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
-
-        is_last_chunk = ctx->des.buffer.bytes_read < (DES_BUFFER_SIZE - ctx->des.b64_offset);
-
         uint8_t des_buffer[DES_BUFFER_SIZE + 7];
         size_t des_buffer_size = 0;
-        handle_remainder(des_buffer, &des_buffer_size, ctx->des.des_remainder, &ctx->des.des_remainder_size, 
-            &ctx->des.des_offset);
-
-        prepare_des_buffer(cmd, ctx, des_buffer, &des_buffer_size, is_last_chunk);
-
-        size_t aligned_size = align_buffer(ctx, des_buffer, des_buffer_size, is_last_chunk);
+        size_t aligned_size = process_des_input_chunk(cmd, ctx, des_buffer, &des_buffer_size, &is_last_chunk);
 
         uint64_t previous_cipher;
         uint64_t previous_input_cipher;

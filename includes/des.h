@@ -23,6 +23,8 @@ uint8_t *decode_base64_buffer(const t_command *cmd, t_context *ctx, uint8_t *buf
     size_t *decoded_size, bool is_last_chunk);
 void prepend_salt_to_output(t_context *ctx, uint8_t *buffer, size_t *buffer_pos);
 void append_cipher_to_output(uint64_t cipher, uint8_t *buffer, size_t *buffer_pos, size_t nbytes);
+size_t process_des_input_chunk(const t_command *cmd, t_context *ctx, uint8_t *des_buffer, size_t *des_buffer_size,
+    bool *is_last_chunk);
 void handle_remainder(uint8_t *buffer, size_t *buffer_size, uint8_t *remainder, size_t *remainder_size, size_t *offset);
 void prepare_des_buffer(const t_command *cmd, t_context *ctx, uint8_t *des_buffer, size_t *des_buffer_size, 
     bool is_last_chunk);

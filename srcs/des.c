@@ -471,6 +471,30 @@ void append_cipher_to_output(uint64_t cipher, uint8_t *buffer, size_t *buffer_po
         buffer[(*buffer_pos)++] = (cipher >> (56 - (i * 8))) & 0xFF;
 }
 
+size_t process_des_input_chunk(const t_command *cmd, t_context *ctx, uint8_t *des_buffer, size_t *des_buffer_size,
+    bool *is_last_chunk)
+{
+    if ((ctx->des.buffer.out_pos + 8) >= DES_BUFFER_SIZE)
+        write_des_output(cmd, ctx);
+
+    handle_remainder(ctx->des.buffer.in, NULL, ctx->des.b64_remainder, &ctx->des.b64_remainder_size,
+        &ctx->des.b64_offset);
+
+    ctx->des.buffer.bytes_read = read_from_input(&ctx->des.in, ctx->des.buffer.in + ctx->des.b64_offset,
+        DES_BUFFER_SIZE - ctx->des.b64_offset);
+    if (ctx->des.buffer.bytes_read == -1)
+        fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
+
+    *is_last_chunk = ctx->des.buffer.bytes_read < (DES_BUFFER_SIZE - ctx->des.b64_offset);
+
+    handle_remainder(des_buffer, des_buffer_size, ctx->des.des_remainder, &ctx->des.des_remainder_size, 
+        &ctx->des.des_offset);
+
+    prepare_des_buffer(cmd, ctx, des_buffer, des_buffer_size, *is_last_chunk);
+
+    return (align_buffer(ctx, des_buffer, *des_buffer_size, *is_last_chunk));
+}
+
 void handle_remainder(uint8_t *buffer, size_t *buffer_size, uint8_t *remainder, size_t *remainder_size, size_t *offset)
 {
     *offset = 0;
