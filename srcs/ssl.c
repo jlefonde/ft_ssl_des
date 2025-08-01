@@ -13,6 +13,8 @@ static const t_command g_commands[] = {
     { "base64", &g_categories[CATEGORY_CIPHER], process_base64 },
     { "des-ecb", &g_categories[CATEGORY_CIPHER], process_des_ecb },
     { "des-cbc", &g_categories[CATEGORY_CIPHER], process_des_cbc },
+    { "des-cfb", &g_categories[CATEGORY_CIPHER], process_des_cfb },
+    { "des-ofb", &g_categories[CATEGORY_CIPHER], process_des_ofb },
 };
 
 static const t_command *get_command(char *cmd)

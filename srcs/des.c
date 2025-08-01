@@ -471,6 +471,12 @@ void append_cipher_to_output(uint64_t cipher, uint8_t *buffer, size_t *buffer_po
         buffer[(*buffer_pos)++] = (cipher >> (56 - (i * 8))) & 0xFF;
 }
 
+void append_cipher_to_output_len(uint64_t cipher, uint8_t *buffer, size_t *buffer_pos, size_t len)
+{
+    for (int i = 0; i < len; i++)
+        buffer[(*buffer_pos)++] = (cipher >> (56 - (i * 8))) & 0xFF;
+}
+
 void pkcs7(uint8_t *block, ssize_t remaining_bytes)
 {
     if (remaining_bytes < 8)

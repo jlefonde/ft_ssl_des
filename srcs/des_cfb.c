@@ -1,6 +1,6 @@
 #include "ssl.h"
 
-void process_des_cbc(const t_command *cmd, int argc, char **argv)
+void process_des_cfb(const t_command *cmd, int argc, char **argv)
 {   
     t_context *ctx = parse_des(cmd, argc, argv);
 
@@ -82,67 +82,44 @@ void process_des_cbc(const t_command *cmd, int argc, char **argv)
             }
         }
 
+        uint64_t previous_cipher;
+        uint64_t previous_input_cipher;
         for (int i = 0; i < aligned_size; i += 8)
         {
-            uint8_t block[8];
-            ft_memcpy(block, input_buffer + i, 8);
+            uint64_t block;
+
+            size_t bytes_to_write = 8;
+            if (is_last_chunk && (i + 8 > input_buffer_size))
+                bytes_to_write = input_buffer_size - i;
 
             if (!ctx->des.decrypt_mode)
             {
-                pkcs7(block, aligned_size - i);
+                if (is_first_block)
+                    block = bytes_to_uint64(ctx->des.iv);
+                else
+                    block = previous_cipher;
 
-                for (int j = 0; j < 8; j++)
-                {
-                    if (is_first_block)
-                        block[j] ^= ctx->des.iv[j];
-                    else
-                        block[j] ^= (cipher >> (56 - (j * 8))) & 0xFF;
-                }
-
-                cipher = des(bytes_to_uint64(block), ctx->des.subkeys, ctx->des.decrypt_mode);
-                append_cipher_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
+                cipher = des(block, ctx->des.subkeys, ctx->des.decrypt_mode);
+                previous_cipher = cipher ^ bytes_to_uint64(input_buffer + i);
+                append_cipher_to_output_len(previous_cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos, 
+                    bytes_to_write);
             }
             else
             {
-                uint64_t current_cipher = bytes_to_uint64(block);
-                uint64_t decrypted = des(current_cipher, ctx->des.subkeys, ctx->des.decrypt_mode);
+                if (is_first_block)
+                    block = bytes_to_uint64(ctx->des.iv);
+                else
+                    block = previous_input_cipher;
 
-                for (int j = 0; j < 8; j++)
-                {
-                    if (is_first_block)
-                        block[j] = ((decrypted >> (56 - (j * 8))) & 0xFF) ^ ctx->des.iv[j];
-                    else
-                        block[j] = ((decrypted >> (56 - (j * 8))) & 0xFF) ^ ((cipher >> (56 - (j * 8))) & 0xFF);
-                }
-
-                cipher = current_cipher;
-                append_cipher_to_output(bytes_to_uint64(block), ctx->des.buffer.out, &ctx->des.buffer.out_pos);
+                cipher = des(block, ctx->des.subkeys, false);
+                previous_input_cipher = bytes_to_uint64(input_buffer + i);
+                uint64_t plain = cipher ^ previous_input_cipher;
+                append_cipher_to_output_len(plain, ctx->des.buffer.out, &ctx->des.buffer.out_pos, bytes_to_write);
             }
 
             is_first_block = false;
         }
     }
-
-    if (!ctx->des.decrypt_mode && ((ctx->des.total_input_size % 8) == 0))
-    {
-        uint8_t block[8];
-
-        pkcs7(block, 0);
-
-        for (int j = 0; j < 8; j++)
-        {
-            if (is_first_block)
-                block[j] ^= ctx->des.iv[j];
-            else
-                block[j] ^= (cipher >> (56 - (j * 8))) & 0xFF;
-        }
-
-        cipher = des(bytes_to_uint64(block), ctx->des.subkeys, ctx->des.decrypt_mode);
-        append_cipher_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
-    }
-
-    if (ctx->des.decrypt_mode)
-        remove_padding(cmd, ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
 
     if (ctx->des.buffer.out_pos > 0)
         write_des_output(cmd, ctx);
