@@ -78,7 +78,6 @@ typedef union u_context
         t_input     in;
         int         out_fd;
         char        *password;
-        // TODO: use fixed array of 8 instead of malloc
         uint8_t     *key;
         uint8_t     *salt;
         uint8_t     *iv;

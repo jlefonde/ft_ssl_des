@@ -117,18 +117,12 @@ void process_des_cbc(const t_command *cmd, int argc, char **argv)
     if (!ctx->des.decrypt_mode && ((ctx->des.total_input_size % 8) == 0))
     {
         uint8_t block[8];
-
         pkcs7(block, 0);
 
-        for (int j = 0; j < 8; j++)
-        {
-            if (is_first_block)
-                block[j] ^= ctx->des.iv[j];
-            else
-                block[j] ^= (cipher >> (56 - (j * 8))) & 0xFF;
-        }
+        uint64_t new_block = bytes_to_uint64(block);
+        new_block ^= is_first_block ? bytes_to_uint64(ctx->des.iv) : cipher;
 
-        cipher = des(bytes_to_uint64(block), ctx->des.subkeys, ctx->des.decrypt_mode);
+        cipher = des(new_block, ctx->des.subkeys, ctx->des.decrypt_mode);
         append_cipher_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
     }
 
