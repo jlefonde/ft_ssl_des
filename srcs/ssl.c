@@ -11,6 +11,7 @@ static const t_command g_commands[] = {
     { "blake2s", &g_categories[CATEGORY_DIGEST], process_blake2s },
     { "blake2b", &g_categories[CATEGORY_DIGEST], process_blake2b },
     { "base64", &g_categories[CATEGORY_CIPHER], process_base64 },
+    { "des", &g_categories[CATEGORY_CIPHER], process_des_cbc },
     { "des-ecb", &g_categories[CATEGORY_CIPHER], process_des_ecb },
     { "des-cbc", &g_categories[CATEGORY_CIPHER], process_des_cbc },
     { "des-cfb", &g_categories[CATEGORY_CIPHER], process_des_cfb },
