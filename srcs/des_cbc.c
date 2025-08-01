@@ -86,37 +86,28 @@ void process_des_cbc(const t_command *cmd, int argc, char **argv)
         {
             uint8_t block[8];
             ft_memcpy(block, input_buffer + i, 8);
-
+    
             if (!ctx->des.decrypt_mode)
             {
                 pkcs7(block, aligned_size - i);
 
-                for (int j = 0; j < 8; j++)
-                {
-                    if (is_first_block)
-                        block[j] ^= ctx->des.iv[j];
-                    else
-                        block[j] ^= (cipher >> (56 - (j * 8))) & 0xFF;
-                }
+                uint64_t new_block = bytes_to_uint64(block);
 
-                cipher = des(bytes_to_uint64(block), ctx->des.subkeys, ctx->des.decrypt_mode);
+                new_block ^= is_first_block ? bytes_to_uint64(ctx->des.iv) : cipher;
+
+                cipher = des(new_block, ctx->des.subkeys, ctx->des.decrypt_mode);
                 append_cipher_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
             }
             else
             {
                 uint64_t current_cipher = bytes_to_uint64(block);
                 uint64_t decrypted = des(current_cipher, ctx->des.subkeys, ctx->des.decrypt_mode);
+                uint64_t new_block = decrypted;
 
-                for (int j = 0; j < 8; j++)
-                {
-                    if (is_first_block)
-                        block[j] = ((decrypted >> (56 - (j * 8))) & 0xFF) ^ ctx->des.iv[j];
-                    else
-                        block[j] = ((decrypted >> (56 - (j * 8))) & 0xFF) ^ ((cipher >> (56 - (j * 8))) & 0xFF);
-                }
+                new_block ^= is_first_block ? bytes_to_uint64(ctx->des.iv) : cipher;
 
                 cipher = current_cipher;
-                append_cipher_to_output(bytes_to_uint64(block), ctx->des.buffer.out, &ctx->des.buffer.out_pos);
+                append_cipher_to_output(new_block, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
             }
 
             is_first_block = false;

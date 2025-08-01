@@ -84,16 +84,11 @@ void process_des_ofb(const t_command *cmd, int argc, char **argv)
         uint64_t previous_cipher;
         for (int i = 0; i < aligned_size; i += 8)
         {
-            uint64_t block;
+            uint64_t block = is_first_block ? bytes_to_uint64(ctx->des.iv) : previous_cipher;
 
             size_t bytes_to_write = 8;
             if (is_last_chunk && (i + 8 > input_buffer_size))
                 bytes_to_write = input_buffer_size - i;
-
-            if (is_first_block)
-                block = bytes_to_uint64(ctx->des.iv);
-            else
-                block = previous_cipher;
 
             uint64_t cipher = des(block, ctx->des.subkeys, false);
             previous_cipher = cipher;

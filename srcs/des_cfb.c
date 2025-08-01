@@ -86,18 +86,13 @@ void process_des_cfb(const t_command *cmd, int argc, char **argv)
         uint64_t previous_input_cipher;
         for (int i = 0; i < aligned_size; i += 8)
         {
-            uint64_t block;
-
             size_t bytes_to_write = 8;
             if (is_last_chunk && (i + 8 > input_buffer_size))
                 bytes_to_write = input_buffer_size - i;
 
             if (!ctx->des.decrypt_mode)
             {
-                if (is_first_block)
-                    block = bytes_to_uint64(ctx->des.iv);
-                else
-                    block = previous_cipher;
+                uint64_t block = is_first_block ? bytes_to_uint64(ctx->des.iv) : previous_cipher;
 
                 cipher = des(block, ctx->des.subkeys, ctx->des.decrypt_mode);
                 previous_cipher = cipher ^ bytes_to_uint64(input_buffer + i);
@@ -106,10 +101,7 @@ void process_des_cfb(const t_command *cmd, int argc, char **argv)
             }
             else
             {
-                if (is_first_block)
-                    block = bytes_to_uint64(ctx->des.iv);
-                else
-                    block = previous_input_cipher;
+                uint64_t block = is_first_block ? bytes_to_uint64(ctx->des.iv) : previous_input_cipher;
 
                 cipher = des(block, ctx->des.subkeys, false);
                 previous_input_cipher = bytes_to_uint64(input_buffer + i);
