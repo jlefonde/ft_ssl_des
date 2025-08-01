@@ -19,77 +19,35 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
         if ((ctx->des.buffer.out_pos + 8) >= DES_BUFFER_SIZE)
             write_des_output(cmd, ctx);
 
-        size_t b64_offset = 0;
-        if (ctx->des.b64_remainder_size > 0)
-        {
-            ft_memcpy(ctx->des.buffer.in, ctx->des.b64_remainder, ctx->des.b64_remainder_size);
-            b64_offset = ctx->des.b64_remainder_size;
-            ctx->des.b64_remainder_size = 0;
-        }
+        handle_remainder(ctx->des.buffer.in, NULL, ctx->des.b64_remainder, &ctx->des.b64_remainder_size,
+            &ctx->des.b64_offset);
 
-        ctx->des.buffer.bytes_read = read_from_input(&ctx->des.in, ctx->des.buffer.in + b64_offset,
-            DES_BUFFER_SIZE - b64_offset);
+        ctx->des.buffer.bytes_read = read_from_input(&ctx->des.in, ctx->des.buffer.in + ctx->des.b64_offset,
+            DES_BUFFER_SIZE - ctx->des.b64_offset);
         if (ctx->des.buffer.bytes_read == -1)
             fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
 
-        is_last_chunk = ctx->des.buffer.bytes_read < (DES_BUFFER_SIZE - b64_offset);
+        is_last_chunk = ctx->des.buffer.bytes_read < (DES_BUFFER_SIZE - ctx->des.b64_offset);
 
-        uint8_t input_buffer[DES_BUFFER_SIZE + 7];
-        size_t input_buffer_size = 0;
-        size_t des_offset = 0;
-        if (ctx->des.des_remainder_size > 0)
-        {
-            ft_memcpy(input_buffer, ctx->des.des_remainder, ctx->des.des_remainder_size);
-            des_offset = ctx->des.des_remainder_size;
-            input_buffer_size = des_offset;
-            ctx->des.des_remainder_size = 0;
-        }
-        
-        if (ctx->des.decrypt_mode && ctx->des.base64_mode)
-        {
-            size_t buffer_size = ctx->des.buffer.bytes_read + b64_offset;
+        uint8_t des_buffer[DES_BUFFER_SIZE + 7];
+        size_t des_buffer_size = 0;
+        handle_remainder(des_buffer, &des_buffer_size, ctx->des.des_remainder, &ctx->des.des_remainder_size, 
+            &ctx->des.des_offset);
 
-            size_t decoded_size = 0;
-            uint8_t *decoded_buffer = decode_base64_buffer(cmd, ctx, ctx->des.buffer.in, buffer_size, &decoded_size, 
-                is_last_chunk);
-            if (!decoded_buffer)
-                fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
+        prepare_des_buffer(cmd, ctx, des_buffer, &des_buffer_size, is_last_chunk);
 
-            ft_memcpy(input_buffer + des_offset, decoded_buffer, decoded_size);
-            input_buffer_size += decoded_size;
-            free(decoded_buffer);
-        }
-        else
-        {
-            ft_memcpy(input_buffer + des_offset, ctx->des.buffer.in, ctx->des.buffer.bytes_read);
-            input_buffer_size += ctx->des.buffer.bytes_read;
-        }
-
-        ctx->des.total_input_size += input_buffer_size;
-        size_t aligned_size = input_buffer_size;
-        if (!is_last_chunk)
-        {
-            size_t complete_groups = input_buffer_size / 8;
-            aligned_size = complete_groups * 8;
-            size_t remainder_size = input_buffer_size - aligned_size;
-
-            if (remainder_size > 0)
-            {
-                ft_memcpy(ctx->des.des_remainder, input_buffer + aligned_size, remainder_size);
-                ctx->des.des_remainder_size = remainder_size;
-            }
-        }
+        size_t aligned_size = align_buffer(ctx, des_buffer, des_buffer_size, is_last_chunk);
 
         for (int i = 0; i < aligned_size; i += 8)
         {
             uint8_t block[8];
-            ft_memcpy(block, input_buffer + i, 8);
+            ft_memcpy(block, des_buffer + i, 8);
 
             if (!ctx->des.decrypt_mode)
                 pkcs7(block, aligned_size - i);
 
             uint64_t cipher = des(bytes_to_uint64(block), ctx->des.subkeys, ctx->des.decrypt_mode);
-            append_cipher_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
+            append_cipher_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos, 8);
         }
     }
 

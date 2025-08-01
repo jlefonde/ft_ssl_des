@@ -465,16 +465,69 @@ void prepend_salt_to_output(t_context *ctx, uint8_t *buffer, size_t *buffer_pos)
     ctx->des.prepend_salt = false;
 }
 
-void append_cipher_to_output(uint64_t cipher, uint8_t *buffer, size_t *buffer_pos)
+void append_cipher_to_output(uint64_t cipher, uint8_t *buffer, size_t *buffer_pos, size_t nbytes)
 {
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < nbytes; i++)
         buffer[(*buffer_pos)++] = (cipher >> (56 - (i * 8))) & 0xFF;
 }
 
-void append_cipher_to_output_len(uint64_t cipher, uint8_t *buffer, size_t *buffer_pos, size_t len)
+void handle_remainder(uint8_t *buffer, size_t *buffer_size, uint8_t *remainder, size_t *remainder_size, size_t *offset)
 {
-    for (int i = 0; i < len; i++)
-        buffer[(*buffer_pos)++] = (cipher >> (56 - (i * 8))) & 0xFF;
+    *offset = 0;
+    if (*remainder_size > 0)
+    {
+        ft_memcpy(buffer, remainder, *remainder_size);
+        *offset = *remainder_size;
+        if (buffer_size)
+            *buffer_size = *remainder_size;
+        *remainder_size = 0;
+    }
+}
+
+void prepare_des_buffer(const t_command *cmd, t_context *ctx, uint8_t *des_buffer, size_t *des_buffer_size, 
+    bool is_last_chunk)
+{
+    if (ctx->des.decrypt_mode && ctx->des.base64_mode)
+    {
+        size_t buffer_size = ctx->des.buffer.bytes_read + ctx->des.b64_offset;
+
+        size_t decoded_size = 0;
+        uint8_t *decoded_buffer = decode_base64_buffer(cmd, ctx, ctx->des.buffer.in, buffer_size, &decoded_size, 
+            is_last_chunk);
+        if (!decoded_buffer)
+            fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
+
+        ft_memcpy(des_buffer + ctx->des.des_offset, decoded_buffer, decoded_size);
+        *des_buffer_size += decoded_size;
+        free(decoded_buffer);
+    }
+    else
+    {
+        ft_memcpy(des_buffer + ctx->des.des_offset, ctx->des.buffer.in, ctx->des.buffer.bytes_read);
+        *des_buffer_size += ctx->des.buffer.bytes_read;
+    }
+
+    ctx->des.total_input_size += *des_buffer_size;
+}
+
+size_t align_buffer(t_context *ctx, uint8_t *des_buffer, size_t des_buffer_size, bool is_last_chunk)
+{
+    size_t aligned_size = des_buffer_size;
+
+    if (!is_last_chunk)
+    {
+        size_t complete_groups = des_buffer_size / 8;
+        aligned_size = complete_groups * 8;
+        size_t remainder_size = des_buffer_size - aligned_size;
+
+        if (remainder_size > 0)
+        {
+            ft_memcpy(ctx->des.des_remainder, des_buffer + aligned_size, remainder_size);
+            ctx->des.des_remainder_size = remainder_size;
+        }
+    }
+
+    return (aligned_size);
 }
 
 void pkcs7(uint8_t *block, ssize_t remaining_bytes)
@@ -493,7 +546,7 @@ void add_full_padding_block(t_context *ctx, uint8_t *out_buffer, size_t *out_pos
     pkcs7(block, 0);
 
     uint64_t cipher = des(bytes_to_uint64(block), ctx->des.subkeys, ctx->des.decrypt_mode);
-    append_cipher_to_output(cipher, out_buffer, out_pos);
+    append_cipher_to_output(cipher, out_buffer, out_pos, 8);
 }
 
 void remove_padding(const t_command *cmd, t_context *ctx, uint8_t *out_buffer, size_t *out_pos)
@@ -528,15 +581,8 @@ void write_des_output(const t_command *cmd, t_context *ctx)
     write_output(ctx->des.out_fd, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
 }
 
-t_context *parse_des(const t_command *cmd, int argc, char **argv)
-{   
-    t_context *ctx = (t_context *)malloc(sizeof(t_context));
-    if (!ctx)
-    {
-        print_error(cmd->name, strerror(errno), NULL);
-        exit(EXIT_FAILURE);
-    }
-
+void init_ctx(t_context *ctx)
+{
     ctx->des.in.fd = STDIN_FILENO;
     ctx->des.out_fd = STDOUT_FILENO;
     ctx->des.key = NULL;
@@ -555,7 +601,21 @@ t_context *parse_des(const t_command *cmd, int argc, char **argv)
     ctx->des.buffer.out_pos = 0;
     ctx->des.total_input_size = 0;
     ctx->des.b64_remainder_size = 0;
+    ctx->des.b64_offset = 0;
     ctx->des.des_remainder_size = 0;
+    ctx->des.des_offset = 0;
+}
+
+t_context *parse_des(const t_command *cmd, int argc, char **argv)
+{   
+    t_context *ctx = (t_context *)malloc(sizeof(t_context));
+    if (!ctx)
+    {
+        print_error(cmd->name, strerror(errno), NULL);
+        exit(EXIT_FAILURE);
+    }
+
+    init_ctx(ctx);
 
     char *in_file = NULL;
     char *out_file = NULL;
