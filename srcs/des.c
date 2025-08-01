@@ -295,25 +295,19 @@ static void read_salt(const t_command *cmd, t_context *ctx)
         bool is_last_chunk = false;
         while (!is_last_chunk && salted_header_size < 16)
         {
-            size_t b64_offset = 0;
-            if (ctx->des.b64_remainder_size > 0)
-            {
-                ft_memcpy(b64_buffer, ctx->des.b64_remainder, ctx->des.b64_remainder_size);
-                b64_offset = ctx->des.b64_remainder_size;
-                ctx->des.b64_remainder_size = 0;
-            }
+            handle_remainder(b64_buffer, NULL, ctx->des.b64_remainder, &ctx->des.b64_remainder_size, &ctx->des.b64_offset);
 
-            bytes_read = read_from_input(&ctx->des.in, b64_buffer + b64_offset, 24 - b64_offset);
+            bytes_read = read_from_input(&ctx->des.in, b64_buffer + ctx->des.b64_offset, 24 - ctx->des.b64_offset);
             if (bytes_read == -1)
                 fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
 
-            is_last_chunk = bytes_read < (24 - b64_offset);
+            is_last_chunk = bytes_read < (24 - ctx->des.b64_offset);
 
             size_t decoded_size = 0;
-            uint8_t *decoded_buffer = decode_base64_buffer(cmd, ctx, b64_buffer, bytes_read + b64_offset, &decoded_size, 
-                is_last_chunk);
+            uint8_t *decoded_buffer = decode_base64_buffer(cmd, ctx, b64_buffer, bytes_read + ctx->des.b64_offset, 
+                &decoded_size, is_last_chunk);
             if (!decoded_buffer)
-                fatal_error(ctx, "COULDNT DECODE BASE64 BUFFER", NULL, NULL, clear_des_ctx);
+                fatal_error(ctx, NULL, NULL, NULL, clear_des_ctx);
     
             size_t bytes_to_copy = (decoded_size <= 16 - salted_header_size) ? decoded_size : 16 - salted_header_size;
             
