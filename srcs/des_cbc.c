@@ -13,8 +13,8 @@ void process_des_cbc(const t_command *cmd, int argc, char **argv)
     if (!ctx->des.decrypt_mode && ctx->des.prepend_salt)
         prepend_salt_to_output(ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
 
+    uint64_t previous_cipher = 0;
     bool is_first_block = true;
-    uint64_t cipher;
     bool is_last_chunk = false;
     while (!is_last_chunk)
     {
@@ -31,23 +31,21 @@ void process_des_cbc(const t_command *cmd, int argc, char **argv)
             {
                 pkcs7(block, aligned_size - i);
 
-                uint64_t new_block = bytes_to_uint64(block);
+                uint64_t plain = bytes_to_uint64(block);
+                uint64_t xor_result = plain ^ (is_first_block ? bytes_to_uint64(ctx->des.iv) : previous_cipher);
 
-                new_block ^= is_first_block ? bytes_to_uint64(ctx->des.iv) : cipher;
-
-                cipher = des(new_block, ctx->des.subkeys, ctx->des.decrypt_mode);
+                uint64_t cipher = des(xor_result, ctx->des.subkeys, ctx->des.decrypt_mode);
+                previous_cipher = cipher;
                 append_cipher_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos, 8);
             }
             else
             {
-                uint64_t current_cipher = bytes_to_uint64(block);
-                uint64_t decrypted = des(current_cipher, ctx->des.subkeys, ctx->des.decrypt_mode);
-                uint64_t new_block = decrypted;
+                uint64_t cipher = bytes_to_uint64(block);
+                uint64_t des_output = des(cipher, ctx->des.subkeys, ctx->des.decrypt_mode);
+                uint64_t plain = des_output ^ (is_first_block ? bytes_to_uint64(ctx->des.iv) : previous_cipher);
 
-                new_block ^= is_first_block ? bytes_to_uint64(ctx->des.iv) : cipher;
-
-                cipher = current_cipher;
-                append_cipher_to_output(new_block, ctx->des.buffer.out, &ctx->des.buffer.out_pos, 8);
+                previous_cipher = cipher;
+                append_cipher_to_output(plain, ctx->des.buffer.out, &ctx->des.buffer.out_pos, 8);
             }
 
             is_first_block = false;
@@ -60,9 +58,9 @@ void process_des_cbc(const t_command *cmd, int argc, char **argv)
         pkcs7(block, 0);
 
         uint64_t new_block = bytes_to_uint64(block);
-        new_block ^= is_first_block ? bytes_to_uint64(ctx->des.iv) : cipher;
+        new_block ^= is_first_block ? bytes_to_uint64(ctx->des.iv) : previous_cipher;
 
-        cipher = des(new_block, ctx->des.subkeys, ctx->des.decrypt_mode);
+        uint64_t cipher = des(new_block, ctx->des.subkeys, ctx->des.decrypt_mode);
         append_cipher_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos, 8);
     }
 

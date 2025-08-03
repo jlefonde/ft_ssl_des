@@ -3,16 +3,19 @@
 key=5C21918AC1BBEC44
 salt=86A2185F6B1DE243
 iv=A4B7397EACE23C39
+salt_short=86A2
+iv_short=A4B7
 pass=verysecure
 
 declare -g files=( "0B" "1B" "2B" "3B" "4B" "32B" "64B" "1KB" "4KB" "64KB" "1MB" )
+declare -g representative_files=( "4B" "64KB" )
 declare -g commands=( "des-ecb" "des-cbc" "des-cfb" "des-ofb" )
 
 ft_ssl_flags=(
     "-k $key -v $iv"
-    "-p $pass -s $salt -a"
     "-k $key -v $iv -a"
-    "-p $pass -s $salt -v $iv -a"
+    "-p $pass -s $salt"
+    "-p $pass -s $salt_short -v $iv_short"
 )
 
 openssl_flags=()
@@ -63,8 +66,21 @@ echo >> ./ft_ssl_des/ft_ssl_des.bats
 
 for command in "${commands[@]}"; do
     echo "# bats file_tags=$command,encrypt" >> ./ft_ssl_des/ft_ssl_des.bats
+
+    i=0
     for file in "${files[@]}"; do
-        for i in "${!ft_ssl_flags[@]}"; do
+        echo >> ./ft_ssl_des/ft_ssl_des.bats
+        export CMD="$command"
+        export FILE="$file"
+        export FT_SSL_FLAGS="${ft_ssl_flags[i]}"
+        export OPENSSL_FLAGS="${openssl_flags[i]}"
+        export FT_SSL_OUT="out/ft_ssl_${command}_${file}_${i}_enc"
+        export OPENSSL_OUT="out/openssl_${command}_${file}_${i}_enc"
+        envsubst '${CMD} ${FILE} ${FT_SSL_FLAGS} ${OPENSSL_FLAGS} ${FT_SSL_OUT} ${OPENSSL_OUT}' < ./ft_ssl_des/encrypt_test.template >> ./ft_ssl_des/ft_ssl_des.bats
+    done
+
+    for ((i=1; i<${#ft_ssl_flags[@]}; i++)); do
+        for file in "${representative_files[@]}"; do
             echo >> ./ft_ssl_des/ft_ssl_des.bats
             export CMD="$command"
             export FILE="$file"
@@ -78,8 +94,21 @@ for command in "${commands[@]}"; do
     echo >> ./ft_ssl_des/ft_ssl_des.bats
 
     echo "# bats file_tags=$command,decrypt" >> ./ft_ssl_des/ft_ssl_des.bats
+    
+    i=0
     for file in "${files[@]}"; do
-        for i in "${!ft_ssl_flags[@]}"; do
+        echo >> ./ft_ssl_des/ft_ssl_des.bats
+        export CMD="$command"
+        export FILE="$file"
+        export FT_SSL_FLAGS="${ft_ssl_flags[i]}"
+        export OPENSSL_FLAGS="${openssl_flags[i]}"
+        export FT_SSL_OUT="out/ft_ssl_${command}_${file}_${i}_dec"
+        export OPENSSL_OUT="out/openssl_${command}_${file}_${i}_dec"
+        envsubst '${CMD} ${FILE} ${FT_SSL_FLAGS} ${OPENSSL_FLAGS} ${FT_SSL_OUT} ${OPENSSL_OUT}' < ./ft_ssl_des/decrypt_test.template >> ./ft_ssl_des/ft_ssl_des.bats
+    done
+
+    for ((i=1; i<${#ft_ssl_flags[@]}; i++)); do
+        for file in "${representative_files[@]}"; do
             echo >> ./ft_ssl_des/ft_ssl_des.bats
             export CMD="$command"
             export FILE="$file"
@@ -91,4 +120,3 @@ for command in "${commands[@]}"; do
         done
     done
 done
-

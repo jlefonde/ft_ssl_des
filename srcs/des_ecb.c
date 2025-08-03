@@ -28,8 +28,8 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
             if (!ctx->des.decrypt_mode)
                 pkcs7(block, aligned_size - i);
 
-            uint64_t cipher = des(bytes_to_uint64(block), ctx->des.subkeys, ctx->des.decrypt_mode);
-            append_cipher_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos, 8);
+            uint64_t output_block = des(bytes_to_uint64(block), ctx->des.subkeys, ctx->des.decrypt_mode);
+            append_cipher_to_output(output_block, ctx->des.buffer.out, &ctx->des.buffer.out_pos, 8);
         }
     }
 
