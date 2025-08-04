@@ -18,7 +18,10 @@ void process_des_cbc(const t_command *cmd, int argc, char **argv);
 void process_des_ecb(const t_command *cmd, int argc, char **argv);
 void process_des_cfb(const t_command *cmd, int argc, char **argv);
 void process_des_ofb(const t_command *cmd, int argc, char **argv);
+void process_des3_cbc(const t_command *cmd, int argc, char **argv);
 void process_des3_ecb(const t_command *cmd, int argc, char **argv);
+void process_des3_cfb(const t_command *cmd, int argc, char **argv);
+void process_des3_ofb(const t_command *cmd, int argc, char **argv);
 
 int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required, size_t key_len);
 uint8_t *decode_base64_buffer(const t_command *cmd, t_context *ctx, uint8_t *buffer, size_t buffer_size, 

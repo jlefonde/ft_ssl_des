@@ -16,7 +16,11 @@ static const t_command g_commands[] = {
     { "des-cbc", &g_categories[CATEGORY_CIPHER], process_des_cbc },
     { "des-cfb", &g_categories[CATEGORY_CIPHER], process_des_cfb },
     { "des-ofb", &g_categories[CATEGORY_CIPHER], process_des_ofb },
+    { "des3", &g_categories[CATEGORY_CIPHER], process_des3_cbc },
+    { "des3-cbc", &g_categories[CATEGORY_CIPHER], process_des3_cbc },
     { "des3-ecb", &g_categories[CATEGORY_CIPHER], process_des3_ecb },
+    { "des3-cfb", &g_categories[CATEGORY_CIPHER], process_des3_cfb },
+    { "des3-ofb", &g_categories[CATEGORY_CIPHER], process_des3_ofb },
 };
 
 static const t_command *get_command(char *cmd)

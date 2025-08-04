@@ -20,7 +20,10 @@ SOURCES = ssl.c \
 			des_cbc.c \
 			des_cfb.c \
 			des_ofb.c \
-			des3_ecb.c
+			des3_ecb.c \
+			des3_cbc.c \
+			des3_cfb.c \
+			des3_ofb.c
 
 OBJECTS = $(addprefix $(OBJECTS_DIR)/, $(SOURCES:.c=.o))
 
