@@ -110,10 +110,10 @@ void clear_des_ctx(t_context *ctx)
     free(ctx);
 }
 
-static void print_hex_str(uint8_t *hex, const char *label)
+static void print_hex_str(uint8_t *hex, size_t hex_len, const char *label)
 {
     ft_printf("%s=", label);
-    for (int i = 0; i < 8; i++)
+    for (size_t i = 0; i < hex_len; i++)
         ft_printf("%02X", hex[i]);
     ft_printf("\n");
 }
@@ -142,13 +142,13 @@ static uint8_t *generate_random_bytes(const t_command *cmd, t_context *ctx, size
     return (buffer);
 }
 
-static void des_print_mode(t_context *ctx, bool show_iv)
+static void des_print_mode(t_context *ctx, bool show_iv, size_t key_len)
 {
-    print_hex_str(ctx->des.key, "key");
-    print_hex_str(ctx->des.salt, "salt");
-    
+    print_hex_str(ctx->des.key, key_len, "key");
+    print_hex_str(ctx->des.salt, DES_SALT_LEN, "salt");
+
     if (show_iv)
-        print_hex_str(ctx->des.iv, "iv");
+        print_hex_str(ctx->des.iv, DES_IV_LEN, "iv");
 }
 
 static uint8_t parse_hex_digit(const t_command *cmd, t_context *ctx, char c, uint8_t *hex)
@@ -416,13 +416,13 @@ int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required, size_t k
     if (ctx->des.password && ctx->des.salt)
     {
         uint8_t *dk = pbkdf2(hmac_sha256, 32, ctx->des.password, ft_strlen(ctx->des.password),
-            ctx->des.salt, DES_SALT_LEN, DES_PBKDF_ITR, DES_KEY_LEN + DES_IV_LEN);
+            ctx->des.salt, DES_SALT_LEN, DES_PBKDF_ITR, key_len + DES_IV_LEN);
 
         if (!ctx->des.key)
-            assign_derived_key(cmd, ctx, &ctx->des.key, dk, DES_KEY_LEN);
+            assign_derived_key(cmd, ctx, &ctx->des.key, dk, key_len);
 
         if (!ctx->des.iv && iv_required)
-            assign_derived_key(cmd, ctx, &ctx->des.iv, dk + DES_KEY_LEN, DES_IV_LEN);
+            assign_derived_key(cmd, ctx, &ctx->des.iv, dk + key_len, DES_IV_LEN);
 
         free(dk);
     }
@@ -431,7 +431,7 @@ int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required, size_t k
     {
         if (!ctx->des.salt)
             ctx->des.salt = generate_random_bytes(cmd, ctx, DES_SALT_LEN);
-        des_print_mode(ctx, iv_required);
+        des_print_mode(ctx, iv_required, key_len);
         return (0);
     }
 
@@ -556,16 +556,6 @@ void pkcs7(uint8_t *block, ssize_t remaining_bytes)
         int npad = 8 - remaining_bytes;
         ft_memset(block + remaining_bytes, npad, npad);
     }
-}
-
-void add_full_padding_block(t_context *ctx, uint8_t *out_buffer, size_t *out_pos)
-{
-    uint8_t block[8];
-
-    pkcs7(block, 0);
-
-    uint64_t cipher = des(bytes_to_uint64(block), ctx->des.subkeys, ctx->des.decrypt_mode);
-    append_cipher_to_output(cipher, out_buffer, out_pos, 8);
 }
 
 void remove_padding(const t_command *cmd, t_context *ctx, uint8_t *out_buffer, size_t *out_pos)

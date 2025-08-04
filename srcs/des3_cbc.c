@@ -67,7 +67,10 @@ void process_des3_cbc(const t_command *cmd, int argc, char **argv)
         uint64_t new_block = bytes_to_uint64(block);
         new_block ^= is_first_block ? bytes_to_uint64(ctx->des.iv) : previous_cipher;
 
-        uint64_t cipher = des(new_block, ctx->des.subkeys, ctx->des.decrypt_mode);
+        uint64_t cipher;
+        cipher = des(new_block, ctx->des.subkeys, false);
+        cipher = des(cipher, ctx->des.subkeys + 16, true);
+        cipher = des(cipher, ctx->des.subkeys + 32, false);
         append_cipher_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos, 8);
     }
 

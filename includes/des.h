@@ -35,7 +35,6 @@ void prepare_des_buffer(const t_command *cmd, t_context *ctx, uint8_t *des_buffe
     bool is_last_chunk);
 size_t align_buffer(t_context *ctx, uint8_t *des_buffer, size_t des_buffer_size, bool is_last_chunk);
 void pkcs7(uint8_t *block, ssize_t remaining_bytes);
-void add_full_padding_block(t_context *ctx, uint8_t *out_buffer, size_t *out_pos);
 void remove_padding(const t_command *cmd, t_context *ctx, uint8_t *out_buffer, size_t *out_pos);
 void write_des_output(const t_command *cmd, t_context *ctx);
 t_context *parse_des(const t_command *cmd, int argc, char **argv, size_t hex_len);

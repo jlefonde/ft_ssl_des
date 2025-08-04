@@ -34,7 +34,13 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
     }
 
     if (!ctx->des.decrypt_mode && ((ctx->des.total_input_size % 8) == 0))
-        add_full_padding_block(ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
+    {
+        uint8_t block[8];
+        pkcs7(block, 0);
+
+        uint64_t cipher = des(bytes_to_uint64(block), ctx->des.subkeys, ctx->des.decrypt_mode);
+        append_cipher_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos, 8);
+    }
 
     if (ctx->des.decrypt_mode)
         remove_padding(cmd, ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);

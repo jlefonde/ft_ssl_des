@@ -28,28 +28,37 @@ void process_des3_ecb(const t_command *cmd, int argc, char **argv)
             if (!ctx->des.decrypt_mode)
                 pkcs7(block, aligned_size - i);
 
-            uint64_t input_block = bytes_to_uint64(block);
             uint64_t output_block;
-            
+
             if (!ctx->des.decrypt_mode)
             {
-                output_block = des(input_block, ctx->des.subkeys, false);
+                output_block = des(bytes_to_uint64(block), ctx->des.subkeys, false);
                 output_block = des(output_block, ctx->des.subkeys + 16, true);
                 output_block = des(output_block, ctx->des.subkeys + 32, false);
             }
             else
             {
-                output_block = des(input_block, ctx->des.subkeys + 32, true);
+                output_block = des(bytes_to_uint64(block), ctx->des.subkeys + 32, true);
                 output_block = des(output_block, ctx->des.subkeys + 16, false);
                 output_block = des(output_block, ctx->des.subkeys, true);
             }
-    
+
             append_cipher_to_output(output_block, ctx->des.buffer.out, &ctx->des.buffer.out_pos, 8);
         }
     }
 
     if (!ctx->des.decrypt_mode && ((ctx->des.total_input_size % 8) == 0))
-        add_full_padding_block(ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
+    {
+        uint8_t block[8];
+        pkcs7(block, 0);
+
+        uint64_t cipher;
+        cipher = des(bytes_to_uint64(block), ctx->des.subkeys, false);
+        cipher = des(cipher, ctx->des.subkeys + 16, true);
+        cipher = des(cipher, ctx->des.subkeys + 32, false);
+
+        append_cipher_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos, 8);
+    }
 
     if (ctx->des.decrypt_mode)
         remove_padding(cmd, ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
