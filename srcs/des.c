@@ -162,23 +162,24 @@ static uint8_t parse_hex_digit(const t_command *cmd, t_context *ctx, char c, uin
     return (hex_value);
 }
 
-static uint8_t *parse_hex_str(const t_command *cmd, t_context *ctx, const char *hex_str)
+static uint8_t *parse_hex_str(const t_command *cmd, t_context *ctx, const char *hex_str, size_t len)
 {
     size_t hex_str_len = ft_strlen(hex_str);
+    size_t hex_len = len * 2;
 
-    if (hex_str_len < 16)
+    if (hex_str_len < hex_len)
         write(STDERR_FILENO, "hex string is too short, padding with zero bytes to length\n", 59);
-    else if (hex_str_len > 16)
+    else if (hex_str_len > hex_len)
     {
         write(STDERR_FILENO, "hex string is too long, ignoring excess\n", 40);
-        hex_str_len = 16;
+        hex_str_len = hex_len;
     }
 
-    uint8_t *hex = malloc(8);
+    uint8_t *hex = malloc(len);
     if (!hex)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
 
-    ft_memset(hex, 0x00, 8);
+    ft_memset(hex, 0x00, len);
 
     int i = 0;
     for (size_t j = 0; j < hex_str_len; j += 2, i++)
@@ -363,12 +364,8 @@ static uint64_t permute(uint64_t block, size_t block_size, const size_t *p_arr, 
     return (permutation);
 }
 
-static uint64_t *key_scheduler(uint64_t key)
+static void key_scheduler(uint64_t *subkeys, uint64_t key)
 {
-    uint64_t *subkeys = malloc(16 * sizeof(uint64_t));
-    if (!subkeys)
-        return (NULL);
-
     uint64_t pc1 = permute(key, 64, g_pc1, 56);
 
     uint32_t left_half = (pc1 >> 28) & 0xFFFFFFF;
@@ -382,11 +379,9 @@ static uint64_t *key_scheduler(uint64_t key)
         uint64_t combined = ((uint64_t)left_half << 28) | right_half;
         subkeys[i] = permute(combined, 56, g_pc2, 48);
     }
-
-    return (subkeys);
 }
 
-int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required)
+int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required, size_t key_len)
 {
     ctx->des.buffer.in = malloc(DES_BUFFER_SIZE);
     if (!ctx->des.buffer.in)
@@ -440,9 +435,15 @@ int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required)
         return (0);
     }
 
-    ctx->des.subkeys = key_scheduler(bytes_to_uint64(ctx->des.key));
+    ctx->des.subkeys = malloc((key_len / 8) * 16 * sizeof(uint64_t));
     if (!ctx->des.subkeys)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
+
+    for (int i = 0; i < key_len / 8; i++)
+    {
+        uint64_t current_key = bytes_to_uint64(ctx->des.key + (i * 8));
+        key_scheduler(ctx->des.subkeys + (i * 16), current_key);
+    }
 
     return (1);
 }
@@ -624,7 +625,7 @@ void init_ctx(t_context *ctx)
     ctx->des.des_offset = 0;
 }
 
-t_context *parse_des(const t_command *cmd, int argc, char **argv)
+t_context *parse_des(const t_command *cmd, int argc, char **argv, size_t key_len)
 {   
     t_context *ctx = (t_context *)malloc(sizeof(t_context));
     if (!ctx)
@@ -689,17 +690,17 @@ t_context *parse_des(const t_command *cmd, int argc, char **argv)
         }
         else if (key_mode)
         {
-            ctx->des.key = parse_hex_str(cmd, ctx, argv[i]);
+            ctx->des.key = parse_hex_str(cmd, ctx, argv[i], key_len);
             key_mode = false;
         }
         else if (salt_mode)
         {
-            ctx->des.salt = parse_hex_str(cmd, ctx, argv[i]);
+            ctx->des.salt = parse_hex_str(cmd, ctx, argv[i], DES_SALT_LEN);
             salt_mode = false;
         }
         else if (iv_mode)
         {
-            ctx->des.iv = parse_hex_str(cmd, ctx, argv[i]);
+            ctx->des.iv = parse_hex_str(cmd, ctx, argv[i], DES_IV_LEN);
             iv_mode = false;
         }
         else

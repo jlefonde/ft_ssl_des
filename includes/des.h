@@ -6,6 +6,7 @@
 # define PASSWORD_MAX_LEN 128
 # define DES_SALT_LEN 8
 # define DES_KEY_LEN 8
+# define DES3_KEY_LEN 24
 # define DES_IV_LEN 8
 # define DES_PBKDF_ITR 10000
 # define DES_BUFFER_SIZE 3072
@@ -17,8 +18,9 @@ void process_des_cbc(const t_command *cmd, int argc, char **argv);
 void process_des_ecb(const t_command *cmd, int argc, char **argv);
 void process_des_cfb(const t_command *cmd, int argc, char **argv);
 void process_des_ofb(const t_command *cmd, int argc, char **argv);
+void process_des3_ecb(const t_command *cmd, int argc, char **argv);
 
-int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required);
+int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required, size_t key_len);
 uint8_t *decode_base64_buffer(const t_command *cmd, t_context *ctx, uint8_t *buffer, size_t buffer_size, 
     size_t *decoded_size, bool is_last_chunk);
 void prepend_salt_to_output(t_context *ctx, uint8_t *buffer, size_t *buffer_pos);
@@ -33,7 +35,7 @@ void pkcs7(uint8_t *block, ssize_t remaining_bytes);
 void add_full_padding_block(t_context *ctx, uint8_t *out_buffer, size_t *out_pos);
 void remove_padding(const t_command *cmd, t_context *ctx, uint8_t *out_buffer, size_t *out_pos);
 void write_des_output(const t_command *cmd, t_context *ctx);
-t_context *parse_des(const t_command *cmd, int argc, char **argv);
+t_context *parse_des(const t_command *cmd, int argc, char **argv, size_t hex_len);
 uint64_t des(uint64_t block, uint64_t *subkeys, bool decrypt_mode);
 void clear_des_ctx(t_context *ctx);
 

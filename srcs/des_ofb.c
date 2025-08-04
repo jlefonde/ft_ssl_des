@@ -2,9 +2,9 @@
 
 void process_des_ofb(const t_command *cmd, int argc, char **argv)
 {   
-    t_context *ctx = parse_des(cmd, argc, argv);
+    t_context *ctx = parse_des(cmd, argc, argv, DES_KEY_LEN);
 
-    if (!prepare_des(cmd, ctx, true))
+    if (!prepare_des(cmd, ctx, true, DES_KEY_LEN))
     {
         clear_des_ctx(ctx);
         return;

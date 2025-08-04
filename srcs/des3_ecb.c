@@ -1,10 +1,10 @@
 #include "ssl.h"
 
-void process_des_ecb(const t_command *cmd, int argc, char **argv)
+void process_des3_ecb(const t_command *cmd, int argc, char **argv)
 {   
-    t_context *ctx = parse_des(cmd, argc, argv, DES_KEY_LEN);
+    t_context *ctx = parse_des(cmd, argc, argv, DES3_KEY_LEN);
 
-    if (!prepare_des(cmd, ctx, false, DES_KEY_LEN))
+    if (!prepare_des(cmd, ctx, false, DES3_KEY_LEN))
     {
         clear_des_ctx(ctx);
         return;
@@ -28,7 +28,22 @@ void process_des_ecb(const t_command *cmd, int argc, char **argv)
             if (!ctx->des.decrypt_mode)
                 pkcs7(block, aligned_size - i);
 
-            uint64_t output_block = des(bytes_to_uint64(block), ctx->des.subkeys, ctx->des.decrypt_mode);
+            uint64_t input_block = bytes_to_uint64(block);
+            uint64_t output_block;
+            
+            if (!ctx->des.decrypt_mode)
+            {
+                output_block = des(input_block, ctx->des.subkeys, false);
+                output_block = des(output_block, ctx->des.subkeys + 16, true);
+                output_block = des(output_block, ctx->des.subkeys + 32, false);
+            }
+            else
+            {
+                output_block = des(input_block, ctx->des.subkeys + 32, true);
+                output_block = des(output_block, ctx->des.subkeys + 16, false);
+                output_block = des(output_block, ctx->des.subkeys, true);
+            }
+    
             append_cipher_to_output(output_block, ctx->des.buffer.out, &ctx->des.buffer.out_pos, 8);
         }
     }
