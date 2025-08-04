@@ -226,7 +226,7 @@ uint8_t *encode_base64_flag(const t_command *cmd, uint8_t *input, size_t n, size
     size_t  total_bytes_written = 0;
     size_t  out_pos = 0;
 
-    for (int i = 0; i < n; i += 3)
+    for (size_t i = 0; i < n; i += 3)
     {
         int nbytes = n - i > 3 ? 3 : n - i;
         int npad = 3 - nbytes;
@@ -275,7 +275,7 @@ uint8_t *decode_base64_flag(const t_command *cmd, uint8_t *input, size_t n, size
     size_t byte_count = 0;
     size_t npad = 0;
 
-    for (int i = 0; i < n; i++)
+    for (size_t i = 0; i < n; i++)
     {
         bytes[byte_count] = get_base64_char_index(input[i], &npad);
         if (bytes[byte_count] >= 64

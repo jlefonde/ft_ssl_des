@@ -22,7 +22,7 @@ void process_des_ofb(const t_command *cmd, int argc, char **argv)
         size_t aligned_size = process_des_input_chunk(cmd, ctx, des_buffer, &des_buffer_size, &is_last_chunk);
 
         uint64_t previous_keystream;
-        for (int i = 0; i < aligned_size; i += 8)
+        for (size_t i = 0; i < aligned_size; i += 8)
         {
             uint64_t block = is_first_block ? bytes_to_uint64(ctx->des.iv) : previous_keystream;
 

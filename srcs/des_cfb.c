@@ -22,7 +22,7 @@ void process_des_cfb(const t_command *cmd, int argc, char **argv)
         size_t aligned_size = process_des_input_chunk(cmd, ctx, des_buffer, &des_buffer_size, &is_last_chunk);
 
         uint64_t previous_cipher;
-        for (int i = 0; i < aligned_size; i += 8)
+        for (size_t i = 0; i < aligned_size; i += 8)
         {
             size_t bytes_to_write = 8;
             if (is_last_chunk && (i + 8 > des_buffer_size))

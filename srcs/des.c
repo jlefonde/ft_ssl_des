@@ -261,7 +261,7 @@ static void assign_derived_key(const t_command *cmd, t_context *ctx, uint8_t **d
 uint8_t *decode_base64_buffer(const t_command *cmd, t_context *ctx, uint8_t *buffer, size_t buffer_size, size_t *decoded_size, bool is_last_chunk)
 {
     size_t filtered_size = 0;
-    for (int i = 0; i < buffer_size; i++)
+    for (size_t i = 0; i < buffer_size; i++)
     {
         if(!ft_isspace(buffer[i]))
             buffer[filtered_size++] = buffer[i];
@@ -302,7 +302,7 @@ static void read_salt(const t_command *cmd, t_context *ctx)
             if (bytes_read == -1)
                 fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
 
-            is_last_chunk = bytes_read < (24 - ctx->des.b64_offset);
+            is_last_chunk = (size_t)bytes_read < (24 - ctx->des.b64_offset);
 
             size_t decoded_size = 0;
             uint8_t *decoded_buffer = decode_base64_buffer(cmd, ctx, b64_buffer, bytes_read + ctx->des.b64_offset, 
@@ -439,7 +439,7 @@ int prepare_des(const t_command *cmd, t_context *ctx, bool iv_required, size_t k
     if (!ctx->des.subkeys)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
 
-    for (int i = 0; i < key_len / 8; i++)
+    for (size_t i = 0; i < key_len / 8; i++)
     {
         uint64_t current_key = bytes_to_uint64(ctx->des.key + (i * 8));
         key_scheduler(ctx->des.subkeys + (i * 16), current_key);
@@ -462,7 +462,7 @@ void prepend_salt_to_output(t_context *ctx, uint8_t *buffer, size_t *buffer_pos)
 
 void append_cipher_to_output(uint64_t cipher, uint8_t *buffer, size_t *buffer_pos, size_t nbytes)
 {
-    for (int i = 0; i < nbytes; i++)
+    for (size_t i = 0; i < nbytes; i++)
         buffer[(*buffer_pos)++] = (cipher >> (56 - (i * 8))) & 0xFF;
 }
 
@@ -480,7 +480,7 @@ size_t process_des_input_chunk(const t_command *cmd, t_context *ctx, uint8_t *de
     if (ctx->des.buffer.bytes_read == -1)
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
 
-    *is_last_chunk = ctx->des.buffer.bytes_read < (DES_BUFFER_SIZE - ctx->des.b64_offset);
+    *is_last_chunk = (size_t)ctx->des.buffer.bytes_read < (DES_BUFFER_SIZE - ctx->des.b64_offset);
 
     handle_remainder(des_buffer, des_buffer_size, ctx->des.des_remainder, &ctx->des.des_remainder_size, 
         &ctx->des.des_offset);

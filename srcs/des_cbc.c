@@ -22,7 +22,7 @@ void process_des_cbc(const t_command *cmd, int argc, char **argv)
         size_t des_buffer_size = 0;
         size_t aligned_size = process_des_input_chunk(cmd, ctx, des_buffer, &des_buffer_size, &is_last_chunk);
 
-        for (int i = 0; i < aligned_size; i += 8)
+        for (size_t i = 0; i < aligned_size; i += 8)
         {
             uint8_t block[8];
             ft_memcpy(block, des_buffer + i, 8);
