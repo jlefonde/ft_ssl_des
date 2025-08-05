@@ -139,6 +139,12 @@ static uint8_t *generate_random_bytes(const t_command *cmd, t_context *ctx, size
         fatal_error(ctx, cmd->name, strerror(errno), NULL, clear_des_ctx);
     }
 
+    if ((size_t)bytes_read != nbytes)
+    {
+        free(buffer);
+        fatal_error(ctx, cmd->name, "Failed to read enough random bytes from /dev/urandom", NULL, clear_des_ctx);
+    }
+
     return (buffer);
 }
 
@@ -336,11 +342,11 @@ static void read_salt(const t_command *cmd, t_context *ctx)
         salted_header_size = bytes_read;
     }
 
-    if (ft_memcmp(salted_header, "Salted__", 8) != 0)
-        fatal_error(ctx, cmd->name, "Bad magic number", NULL, clear_des_ctx);
-
     if (salted_header_size < 16)
         fatal_error(ctx, cmd->name, "Error reading input file", NULL, clear_des_ctx);
+
+    if (ft_memcmp(salted_header, "Salted__", 8) != 0)
+        fatal_error(ctx, cmd->name, "Bad magic number", NULL, clear_des_ctx);
 
     ctx->des.salt = malloc(8);
     if (!ctx->des.salt)

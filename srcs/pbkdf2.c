@@ -64,7 +64,7 @@ uint8_t *pbkdf2(
     size_t c,
     int dk_len)
 {
-    size_t l = ceil((double)dk_len / (double)h_len);
+    size_t l = (dk_len - 1) / (h_len + 1);
 
     size_t r = dk_len - (l - 1) * h_len;
 

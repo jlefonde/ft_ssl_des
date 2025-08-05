@@ -129,6 +129,7 @@ t_context *parse_digest(const t_command *cmd, int argc, char **argv)
             input->data = (uint8_t *)ft_strdup(argv[i]);
             input->fd = -1;
             input->data_pos = 0;
+            input->data_len = 0;
 
             if (sum_mode)
                 sum_mode = false;

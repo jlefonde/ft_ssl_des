@@ -38,6 +38,7 @@ ssize_t read_from_input(t_input *input, void* buffer, size_t nbytes)
     {
         if (!input->data)
             return (0);
+
         size_t remaining_bytes = input->data_len - input->data_pos;
         if (!remaining_bytes)
             return (0);
