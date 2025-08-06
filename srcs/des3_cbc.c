@@ -39,7 +39,7 @@ void process_des3_cbc(const t_command *cmd, int argc, char **argv)
                 cipher = des(cipher, ctx->des.subkeys + 16, true);
                 cipher = des(cipher, ctx->des.subkeys + 32, false);
                 previous_cipher = cipher;
-                append_cipher_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos, 8);
+                append_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos, 8);
             }
             else
             {
@@ -52,7 +52,7 @@ void process_des3_cbc(const t_command *cmd, int argc, char **argv)
 
                 uint64_t plain = des_output ^ (is_first_block ? bytes_to_uint64(ctx->des.iv) : previous_cipher);
                 previous_cipher = cipher;
-                append_cipher_to_output(plain, ctx->des.buffer.out, &ctx->des.buffer.out_pos, 8);
+                append_to_output(plain, ctx->des.buffer.out, &ctx->des.buffer.out_pos, 8);
             }
 
             is_first_block = false;
@@ -71,7 +71,7 @@ void process_des3_cbc(const t_command *cmd, int argc, char **argv)
         cipher = des(new_block, ctx->des.subkeys, false);
         cipher = des(cipher, ctx->des.subkeys + 16, true);
         cipher = des(cipher, ctx->des.subkeys + 32, false);
-        append_cipher_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos, 8);
+        append_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos, 8);
     }
 
     if (ctx->des.decrypt_mode)

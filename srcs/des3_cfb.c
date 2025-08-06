@@ -39,7 +39,7 @@ void process_des3_cfb(const t_command *cmd, int argc, char **argv)
 
                 uint64_t cipher = keystream ^ bytes_to_uint64(des_buffer + i);
                 previous_cipher = cipher;
-                append_cipher_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos, bytes_to_write);
+                append_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos, bytes_to_write);
             }
             else
             {
@@ -53,7 +53,7 @@ void process_des3_cfb(const t_command *cmd, int argc, char **argv)
                 uint64_t current_cipher = bytes_to_uint64(des_buffer + i);
                 previous_cipher = current_cipher;
                 uint64_t plain = keystream ^ current_cipher;
-                append_cipher_to_output(plain, ctx->des.buffer.out, &ctx->des.buffer.out_pos, bytes_to_write);
+                append_to_output(plain, ctx->des.buffer.out, &ctx->des.buffer.out_pos, bytes_to_write);
             }
 
             is_first_block = false;

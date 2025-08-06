@@ -1,5 +1,36 @@
 #include "ssl.h"
 
+static const t_cipher_mode_ops g_des_mode_ops[] = {
+    [MODE_ECB] = {
+        .iv_required = false,
+        .padding_required = true,
+        .init_mode = NULL,
+        .process_block = process_des_ecb_block,
+        .finalize_mode = finalize_des_ecb_mode,
+    },
+    [MODE_CBC] = {
+        .iv_required = true,
+        .padding_required = true,
+        .init_mode = init_des_cbc_mode,
+        .process_block = process_des_cbc_block,
+        .finalize_mode = finalize_des_cbc_mode
+    },
+    [MODE_CFB] = {
+        .iv_required = true,
+        .padding_required = false,
+        .init_mode = init_des_cfb_mode,
+        .process_block = process_des_cfb_block,
+        .finalize_mode = NULL
+    },
+    [MODE_OFB] = {
+        .iv_required = true,
+        .padding_required = false,
+        .init_mode = init_des_ofb_mode,
+        .process_block = process_des_ofb_block,
+        .finalize_mode = NULL
+    }
+};
+
 static const size_t g_ip[64] = {
     58, 50, 42, 34, 26, 18, 10, 2, 60, 52, 44, 36, 28, 20, 12, 4,
     62, 54, 46, 38, 30, 22, 14, 6, 64, 56, 48, 40, 32, 24, 16, 8,
@@ -466,7 +497,7 @@ void prepend_salt_to_output(t_context *ctx, uint8_t *buffer, size_t *buffer_pos)
     ctx->des.prepend_salt = false;
 }
 
-void append_cipher_to_output(uint64_t cipher, uint8_t *buffer, size_t *buffer_pos, size_t nbytes)
+void append_to_output(uint64_t cipher, uint8_t *buffer, size_t *buffer_pos, size_t nbytes)
 {
     for (size_t i = 0; i < nbytes; i++)
         buffer[(*buffer_pos)++] = (cipher >> (56 - (i * 8))) & 0xFF;
@@ -619,6 +650,8 @@ void init_ctx(t_context *ctx)
     ctx->des.b64_offset = 0;
     ctx->des.des_remainder_size = 0;
     ctx->des.des_offset = 0;
+    ctx->des.prev_block = 0;
+    ctx->des.keystream = 0;
 }
 
 t_context *parse_des(const t_command *cmd, int argc, char **argv, size_t key_len)
@@ -781,4 +814,78 @@ uint64_t des(uint64_t block, uint64_t *subkeys, bool decrypt_mode)
     uint64_t fp = permute(combined, 64, g_fp, 64);
 
     return (fp);
+}
+
+void process_des(const t_command *cmd, int argc, char **argv, t_cipher_mode cipher_mode)
+{
+    if (cipher_mode >= (sizeof(g_des_mode_ops)/sizeof(g_des_mode_ops[0]))
+        || !g_des_mode_ops[cipher_mode].process_block)
+    {
+        print_error(cmd->name, "Unsupported cipher mode", NULL);
+        exit(1);
+    }
+
+    t_context *ctx = parse_des(cmd, argc, argv, DES_KEY_LEN);
+    const t_cipher_mode_ops *ops = &g_des_mode_ops[cipher_mode];
+
+    if (!prepare_des(cmd, ctx, ops->iv_required, DES_KEY_LEN))
+    {
+        clear_des_ctx(ctx);
+        return;
+    }
+
+    if (ops->init_mode)
+        ops->init_mode(ctx);
+
+    if (!ctx->des.decrypt_mode && ctx->des.prepend_salt)
+        prepend_salt_to_output(ctx, ctx->des.buffer.out, &ctx->des.buffer.out_pos);
+
+    bool is_last_chunk = false;
+    while (!is_last_chunk)
+    {
+        uint8_t des_buffer[DES_BUFFER_SIZE + 7];
+        size_t des_buffer_size = 0;
+        size_t aligned_size = process_des_input_chunk(cmd, ctx, des_buffer, &des_buffer_size, &is_last_chunk);
+
+        for (size_t i = 0; i < aligned_size; i += 8)
+        {
+            uint8_t in_block[8];
+            ft_memcpy(in_block, des_buffer + i, 8);
+
+            size_t bytes_to_append = 8;
+            if (!ops->padding_required && is_last_chunk && (i + 8 > des_buffer_size))
+                bytes_to_append = des_buffer_size - i;
+
+            size_t remaining_bytes = aligned_size - i;
+            ops->process_block(ctx, in_block, remaining_bytes, bytes_to_append);
+        }
+    }
+
+    if (ops->finalize_mode)
+        ops->finalize_mode(cmd, ctx);
+
+    if (ctx->des.buffer.out_pos > 0)
+        write_des_output(cmd, ctx);
+
+    clear_des_ctx(ctx);
+}
+
+void process_des_ecb(const t_command *cmd, int argc, char **argv)
+{
+    process_des(cmd, argc, argv, MODE_ECB);
+}
+
+void process_des_cbc(const t_command *cmd, int argc, char **argv)
+{
+    process_des(cmd, argc, argv, MODE_CBC);
+}
+
+void process_des_cfb(const t_command *cmd, int argc, char **argv)
+{
+    process_des(cmd, argc, argv, MODE_CFB);
+}
+
+void process_des_ofb(const t_command *cmd, int argc, char **argv)
+{
+    process_des(cmd, argc, argv, MODE_OFB);
 }

@@ -35,6 +35,22 @@ typedef enum e_input_type
     INPUT_MEMORY
 }	t_input_type;
 
+typedef enum e_cipher_mode
+{
+    MODE_ECB,
+    MODE_CBC,
+    MODE_CFB,
+    MODE_OFB
+}	t_cipher_mode;
+
+typedef struct {
+    bool iv_required;
+    bool padding_required;
+    void (*init_mode)(t_context *ctx);
+    void (*process_block)(t_context *ctx, uint8_t *in_block, size_t remaining_bytes, size_t bytes_to_append);
+    void (*finalize_mode)(const t_command *cmd, t_context *ctx);
+} t_cipher_mode_ops;
+
 typedef struct s_input
 {
     t_input_type    type;
@@ -94,6 +110,8 @@ typedef union u_context
         size_t      des_remainder_size;
         size_t      des_offset;
         size_t      total_input_size;
+        uint64_t    prev_block;
+        uint64_t    keystream;
     }   des;
 }	t_context;
 

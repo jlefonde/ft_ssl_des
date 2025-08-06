@@ -43,7 +43,7 @@ void process_des3_ecb(const t_command *cmd, int argc, char **argv)
                 output_block = des(output_block, ctx->des.subkeys, true);
             }
 
-            append_cipher_to_output(output_block, ctx->des.buffer.out, &ctx->des.buffer.out_pos, 8);
+            append_to_output(output_block, ctx->des.buffer.out, &ctx->des.buffer.out_pos, 8);
         }
     }
 
@@ -57,7 +57,7 @@ void process_des3_ecb(const t_command *cmd, int argc, char **argv)
         cipher = des(cipher, ctx->des.subkeys + 16, true);
         cipher = des(cipher, ctx->des.subkeys + 32, false);
 
-        append_cipher_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos, 8);
+        append_to_output(cipher, ctx->des.buffer.out, &ctx->des.buffer.out_pos, 8);
     }
 
     if (ctx->des.decrypt_mode)

@@ -37,7 +37,7 @@ void process_des3_ofb(const t_command *cmd, int argc, char **argv)
 
             previous_keystream = keystream;
             uint64_t output_block = keystream ^ bytes_to_uint64(des_buffer + i);
-            append_cipher_to_output(output_block, ctx->des.buffer.out, &ctx->des.buffer.out_pos, bytes_to_write);
+            append_to_output(output_block, ctx->des.buffer.out, &ctx->des.buffer.out_pos, bytes_to_write);
 
             is_first_block = false;
         }
