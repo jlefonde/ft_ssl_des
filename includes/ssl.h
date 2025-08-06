@@ -47,8 +47,10 @@ typedef struct {
     bool iv_required;
     bool padding_required;
     void (*init_mode)(t_context *ctx);
-    void (*process_block)(t_context *ctx, uint8_t *in_block, size_t remaining_bytes, size_t bytes_to_append);
-    void (*finalize_mode)(const t_command *cmd, t_context *ctx);
+    void (*process_block)(t_context *ctx, uint8_t *in_block, size_t remaining_bytes, size_t bytes_to_append,
+        uint64_t (*des_func)(uint64_t block, uint64_t *subkeys, bool decrypt_mode));
+    void (*finalize_mode)(const t_command *cmd, t_context *ctx,
+        uint64_t (*des_func)(uint64_t block, uint64_t *subkeys, bool decrypt_mode));
 } t_cipher_mode_ops;
 
 typedef struct s_input

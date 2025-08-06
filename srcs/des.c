@@ -816,7 +816,30 @@ uint64_t des(uint64_t block, uint64_t *subkeys, bool decrypt_mode)
     return (fp);
 }
 
-void process_des(const t_command *cmd, int argc, char **argv, t_cipher_mode cipher_mode)
+uint64_t des3(uint64_t block, uint64_t *subkeys, bool decrypt_mode)
+{
+    uint64_t *subkeys1 = subkeys;
+    uint64_t *subkeys2 = subkeys + 16;
+    uint64_t *subkeys3 = subkeys + 32;
+
+    if (decrypt_mode)
+    {
+        block = des(block, subkeys3, true);
+        block = des(block, subkeys2, false);
+        block = des(block, subkeys1, true);
+    }
+    else
+    {
+        block = des(block, subkeys1, false);
+        block = des(block, subkeys2, true);
+        block = des(block, subkeys3, false);
+    }
+
+    return (block);
+}
+
+static void process_des(const t_command *cmd, int argc, char **argv, t_cipher_mode cipher_mode, size_t key_len,
+    uint64_t (*des_func)(uint64_t block, uint64_t *subkeys, bool decrypt_mode))
 {
     if (cipher_mode >= (sizeof(g_des_mode_ops)/sizeof(g_des_mode_ops[0]))
         || !g_des_mode_ops[cipher_mode].process_block)
@@ -825,10 +848,10 @@ void process_des(const t_command *cmd, int argc, char **argv, t_cipher_mode ciph
         exit(1);
     }
 
-    t_context *ctx = parse_des(cmd, argc, argv, DES_KEY_LEN);
+    t_context *ctx = parse_des(cmd, argc, argv, key_len);
     const t_cipher_mode_ops *ops = &g_des_mode_ops[cipher_mode];
 
-    if (!prepare_des(cmd, ctx, ops->iv_required, DES_KEY_LEN))
+    if (!prepare_des(cmd, ctx, ops->iv_required, key_len))
     {
         clear_des_ctx(ctx);
         return;
@@ -857,12 +880,12 @@ void process_des(const t_command *cmd, int argc, char **argv, t_cipher_mode ciph
                 bytes_to_append = des_buffer_size - i;
 
             size_t remaining_bytes = aligned_size - i;
-            ops->process_block(ctx, in_block, remaining_bytes, bytes_to_append);
+            ops->process_block(ctx, in_block, remaining_bytes, bytes_to_append, des_func);
         }
     }
 
     if (ops->finalize_mode)
-        ops->finalize_mode(cmd, ctx);
+        ops->finalize_mode(cmd, ctx, des_func);
 
     if (ctx->des.buffer.out_pos > 0)
         write_des_output(cmd, ctx);
@@ -872,20 +895,40 @@ void process_des(const t_command *cmd, int argc, char **argv, t_cipher_mode ciph
 
 void process_des_ecb(const t_command *cmd, int argc, char **argv)
 {
-    process_des(cmd, argc, argv, MODE_ECB);
+    process_des(cmd, argc, argv, MODE_ECB, DES_KEY_LEN, des);
 }
 
 void process_des_cbc(const t_command *cmd, int argc, char **argv)
 {
-    process_des(cmd, argc, argv, MODE_CBC);
+    process_des(cmd, argc, argv, MODE_CBC, DES_KEY_LEN, des);
 }
 
 void process_des_cfb(const t_command *cmd, int argc, char **argv)
 {
-    process_des(cmd, argc, argv, MODE_CFB);
+    process_des(cmd, argc, argv, MODE_CFB, DES_KEY_LEN, des);
 }
 
 void process_des_ofb(const t_command *cmd, int argc, char **argv)
 {
-    process_des(cmd, argc, argv, MODE_OFB);
+    process_des(cmd, argc, argv, MODE_OFB, DES_KEY_LEN, des);
+}
+
+void process_des3_ecb(const t_command *cmd, int argc, char **argv)
+{
+    process_des(cmd, argc, argv, MODE_ECB, DES3_KEY_LEN, des3);
+}
+
+void process_des3_cbc(const t_command *cmd, int argc, char **argv)
+{
+    process_des(cmd, argc, argv, MODE_CBC, DES3_KEY_LEN, des3);
+}
+
+void process_des3_cfb(const t_command *cmd, int argc, char **argv)
+{
+    process_des(cmd, argc, argv, MODE_CFB, DES3_KEY_LEN, des3);
+}
+
+void process_des3_ofb(const t_command *cmd, int argc, char **argv)
+{
+    process_des(cmd, argc, argv, MODE_OFB, DES3_KEY_LEN, des3);
 }
